@@ -6,27 +6,24 @@ const STEP_IN_NS = 10_000_000;
 const STEP_IN_S = 0.01;
 
 describe("WheelFollower", () => {
-  it("starts from wherever the axis and the wheel are", () => {
+  it("starts from wherever the axis and the wheel are, at the axis speed", () => {
     const follower = new WheelFollower(0.1);
-    expect(follower.velocityInRadPerS(5.0, 0, STEP_IN_S)).toBe(0);
+    expect(follower.velocityInRadPerS(5.0, 0.3, 0, 0)).toBeCloseTo(3, 9);
   });
 
-  it("catches up with the axis after a delay, so nothing drifts", () => {
+  it("corrects a position difference gently instead of in one jump", () => {
     const follower = new WheelFollower(0.1);
-    let wheelAngle = 0;
-    follower.velocityInRadPerS(5.0, wheelAngle, STEP_IN_S);
-    // The axis moved 3 cm while the simulator heard nothing.
-    const velocity = follower.velocityInRadPerS(5.03, wheelAngle, STEP_IN_S);
-    wheelAngle += velocity * STEP_IN_S;
-    expect(wheelAngle * 0.1).toBeCloseTo(0.03, 9);
-    expect(follower.velocityInRadPerS(5.03, wheelAngle, STEP_IN_S)).toBeCloseTo(0, 9);
+    follower.velocityInRadPerS(5.0, 0, 0, 0);
+    // The axis is 3 cm further than the wheel, and standing still.
+    const velocity = follower.velocityInRadPerS(5.03, 0, 0, 0);
+    expect(velocity * 0.1).toBeCloseTo(0.03 / WheelFollower.CATCH_UP_TIME_IN_S, 9);
   });
 
   it("re-anchors when the wheel is reset under it", () => {
     const follower = new WheelFollower(0.1);
-    follower.velocityInRadPerS(5.0, 10, STEP_IN_S);
+    follower.velocityInRadPerS(5.0, 0, 0, 10);
     // Restart puts the simulated wheel back to 0 while the axis stays.
-    expect(follower.velocityInRadPerS(5.0, 0, STEP_IN_S)).toBe(0);
+    expect(follower.velocityInRadPerS(5.0, 0, 0, 0)).toBe(0);
   });
 });
 
@@ -62,45 +59,51 @@ describe("GyroAverager", () => {
 });
 
 describe("WheelFollower in the simulation", () => {
-  it("keeps the simulated wheels on the NC axes despite a laggy link", async () => {
+  async function driveThroughLaggyLink(noiseName: "ideal" | "realistic") {
     const { Simulation, World } = await import("@garage/sim-core");
-    const { geometry, idealNoise, lidarS2e, emptyBoxWorld } = await import("../../../packages/sim-core/test/fixtures");
+    const fixtures = await import("../../../packages/sim-core/test/fixtures");
+    const { geometry, lidarS2e, emptyBoxWorld } = fixtures;
     const simulation = new Simulation({
       world: new World(emptyBoxWorld),
       geometry: { ...geometry, motorTimeConstantInS: 0 },
-      noise: idealNoise,
+      noise: noiseName === "ideal" ? fixtures.idealNoise : fixtures.realisticNoise,
       lidarProfile: lidarS2e,
       seed: 1,
     });
-    const left = new WheelFollower(geometry.wheelRadiusInM);
-    const right = new WheelFollower(geometry.wheelRadiusInM);
-    let axisLeft = 3.0;
-    let axisRight = 7.0;
-    let heardLeft = axisLeft;
-    let heardRight = axisRight;
+    const follower = new WheelFollower(geometry.wheelRadiusInM);
+    // An NC axis driving both wheels: ramps to 0.3 m/s at 1 m/s^2, holds, ramps down.
+    let axisPosition = 3.0;
+    let axisVelocity = 0;
+    let heard = { position: axisPosition, velocity: axisVelocity, step: 0 };
     let feedback = simulation.step({ leftWheelSetpointInRadPerS: 0, rightWheelSetpointInRadPerS: 0, isDriveEnabled: true, isLidarPowered: false });
-    const startLeft = feedback.leftWheelAngleInRad * geometry.wheelRadiusInM;
-    const startRight = feedback.rightWheelAngleInRad * geometry.wheelRadiusInM;
-    left.velocityInRadPerS(axisLeft, feedback.leftWheelAngleInRad, 0.01);
-    right.velocityInRadPerS(axisRight, feedback.rightWheelAngleInRad, 0.01);
-    for (let i = 0; i < 500; i++) {
-      axisLeft += 0.002 + 0.001 * Math.sin(i / 20);
-      axisRight += 0.003;
+    const start = simulation.truePose;
+    const startAngle = feedback.leftWheelAngleInRad;
+    follower.velocityInRadPerS(axisPosition, 0, 0, feedback.leftWheelAngleInRad);
+    for (let i = 0; i < 600; i++) {
+      const target = i < 400 ? 0.3 : 0;
+      axisVelocity += Math.max(-0.01, Math.min(0.01, target - axisVelocity));
+      axisPosition += axisVelocity * 0.01;
       // The link only gets through every fourth step.
-      if (i % 4 === 0) {
-        heardLeft = axisLeft;
-        heardRight = axisRight;
-      }
-      feedback = simulation.step({
-        leftWheelSetpointInRadPerS: left.velocityInRadPerS(heardLeft, feedback.leftWheelAngleInRad, 0.01),
-        rightWheelSetpointInRadPerS: right.velocityInRadPerS(heardRight, feedback.rightWheelAngleInRad, 0.01),
-        isDriveEnabled: true,
-        isLidarPowered: false,
-      });
+      if (i % 4 === 0) heard = { position: axisPosition, velocity: axisVelocity, step: i };
+      const wheel = follower.velocityInRadPerS(heard.position, heard.velocity, (i - heard.step) * 0.01, feedback.leftWheelAngleInRad);
+      feedback = simulation.step({ leftWheelSetpointInRadPerS: wheel, rightWheelSetpointInRadPerS: wheel, isDriveEnabled: true, isLidarPowered: false });
     }
-    const wheelLeft = feedback.leftWheelAngleInRad * geometry.wheelRadiusInM - startLeft;
-    const wheelRight = feedback.rightWheelAngleInRad * geometry.wheelRadiusInM - startRight;
-    expect(wheelLeft).toBeCloseTo(heardLeft - 3.0, 6);
-    expect(wheelRight).toBeCloseTo(heardRight - 7.0, 6);
+    return {
+      axisTravel: heard.position - 3.0,
+      wheelTravel: (feedback.leftWheelAngleInRad - startAngle) * geometry.wheelRadiusInM,
+      robotTravel: simulation.truePose.distanceTo(start),
+    };
+  }
+
+  it("keeps the simulated wheels on the NC axis despite a laggy link", async () => {
+    const run = await driveThroughLaggyLink("ideal");
+    expect(Math.abs(run.wheelTravel - run.axisTravel)).toBeLessThan(0.002);
+    expect(run.robotTravel).toBeCloseTo(run.wheelTravel, 3);
+  });
+
+  it("keeps the wheel speed smooth, so a laggy link does not cause extra slip", async () => {
+    const run = await driveThroughLaggyLink("realistic");
+    // Realistic slip is a few percent. Jumpy wheel speeds once gave over 25 %.
+    expect(run.robotTravel / run.wheelTravel).toBeGreaterThan(0.95);
   });
 });

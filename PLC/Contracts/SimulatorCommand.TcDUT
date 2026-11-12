@@ -6,7 +6,10 @@ STRUCT
 	version : UDINT;
 	cycle : UDINT;
 	plcTimeInNs : ULINT;
-	// The wheels' actual position, from the NC axes. The simulated wheels follow it exactly.
+	// The wheels' actual speed and position, from the NC axes. The simulated wheels run at
+	// the speed and are nudged towards the position, so they never drift away from NC.
+	leftWheelVelocityInMPerS : LREAL;
+	rightWheelVelocityInMPerS : LREAL;
 	leftWheelPositionInM : LREAL;
 	rightWheelPositionInM : LREAL;
 	isLeftDriveEnabled : BOOL;
