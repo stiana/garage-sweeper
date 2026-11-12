@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Converts readable .st sources in plc/src into TwinCAT 3 object files.
+"""Converts readable .st sources in PLC/src into TwinCAT 3 object files.
 
 TwinCAT keeps each POU in its own XML file (.TcPOU, .TcIO, .TcDUT, .TcGVL).
 Writing those by hand is noisy, so the framework is written as plain ST here
-and converted. Add the generated files to the PLC project in XAE with
-"Add > Existing Item". After that XAE owns them; edit them there.
+and converted. The generated files are also listed in PLC.plcproj, so
+XAE shows them after a reload of the project. A file edited in XAE is
+overwritten the next time this script runs, so edit the .st source instead,
+or stop generating that file.
 
 Source layout, one object per file:
   FUNCTION_BLOCK / PROGRAM ...   declaration up to the first marker below
@@ -19,6 +21,7 @@ followed by GET and/or SET on their own lines.
 GUIDs are derived from the object and member names, so regenerating gives
 the same ids.
 """
+import re
 import sys
 import uuid
 from pathlib import Path
@@ -188,15 +191,56 @@ def convert(path: Path, out_dir: Path) -> Path:
     return target
 
 
+GENERATED_GROUP = re.compile(r"\s*<!-- st2tc:begin -->.*?<!-- st2tc:end -->", re.S)
+GENERATED_FOLDER = re.compile(r'\s*<Folder Include="generated(\\[^"]*)?" />')
+EMPTY_GROUP = re.compile(r"\s*<ItemGroup>\s*</ItemGroup>")
+COMPILE_ITEM = re.compile(r'\s*<Compile Include="([^"]+)">\s*<SubType>Code</SubType>\s*</Compile>')
+
+
+def update_project(project: Path, generated: list[Path], root: Path) -> None:
+    """Lists the generated objects in the .plcproj, between st2tc markers, so XAE loads them.
+
+    A generated program replaces a hand-made one with the same file name elsewhere
+    in the project (XAE's default POUs/MAIN.TcPOU), so there is only one MAIN.
+    """
+    text = GENERATED_GROUP.sub("", project.read_text(encoding="utf-8-sig"))
+    names = {path.name.lower() for path in generated}
+    text = COMPILE_ITEM.sub(lambda m: "" if Path(m.group(1).replace("\\", "/")).name.lower() in names else m.group(0), text)
+    # XAE may drop the marker comments when it saves, so also clear old entries one by one.
+    text = EMPTY_GROUP.sub("", GENERATED_FOLDER.sub("", text))
+    newline = "\r\n" if "\r\n" in text else "\n"
+    relative = [str(path.relative_to(root)).replace("/", "\\") for path in generated]
+    folders = sorted({
+        str(parent).replace("/", "\\")
+        for r in relative
+        for parent in Path(r.replace("\\", "/")).parents
+        if str(parent) != "."
+    })
+    lines = ["  <!-- st2tc:begin -->", "  <ItemGroup>"]
+    for item in relative:
+        lines += [f'    <Compile Include="{item}">', "      <SubType>Code</SubType>", "    </Compile>"]
+    lines += ["  </ItemGroup>", "  <ItemGroup>"]
+    lines += [f'    <Folder Include="{folder}" />' for folder in folders]
+    lines += ["  </ItemGroup>", "  <!-- st2tc:end -->"]
+    marker = "  <ItemGroup>"
+    at = text.index(marker)
+    text = text[:at] + newline.join(lines) + newline + text[at:]
+    project.write_text(text.replace("\r\n", "\n").replace("\n", newline), encoding="utf-8")
+
+
 def main() -> None:
     root = Path(__file__).resolve().parent.parent
     source_dir = root / "src"
     out_root = root / "generated"
-    count = 0
-    for path in sorted(source_dir.rglob("*.st")):
+    generated = [
         convert(path, out_root / path.parent.relative_to(source_dir))
-        count += 1
-    print(f"Wrote {count} TwinCAT objects to {out_root}")
+        for path in sorted(source_dir.rglob("*.st"))
+    ]
+    print(f"Wrote {len(generated)} TwinCAT objects to {out_root}")
+    projects = list(root.glob("*.plcproj"))
+    if projects:
+        update_project(projects[0], generated, root)
+        print(f"Listed them in {projects[0].name}. Reload the project in XAE to see them.")
 
 
 if __name__ == "__main__":

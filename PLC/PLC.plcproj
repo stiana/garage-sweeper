@@ -16,11 +16,141 @@
     <Implicit_Jitter_Distribution>{ee8116bb-0106-463e-91e6-a55a2557a25a}</Implicit_Jitter_Distribution>
     <LibraryReferences>{b159983a-1ad3-4c27-827c-c9170d92c48d}</LibraryReferences>
   </PropertyGroup>
+  <!-- st2tc:begin -->
   <ItemGroup>
-    <Compile Include="PlcTask.TcTTO">
+    <Compile Include="generated\Adapters\Simulation\Accelerometer_Simulated.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\MAIN.TcPOU">
+    <Compile Include="generated\Adapters\Simulation\DigitalOut_SimulatedLidarPower.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Adapters\Simulation\DriveAxis_Simulated.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Adapters\Simulation\Gyro_Simulated.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Adapters\Simulation\Lidar_Simulated.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Adapters\Simulation\SimulatorLink.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\App\MAIN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\App\RobotComposition.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\HmiCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\HmiCommandCode.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\HmiStatus.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\MissionState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\RobotHmi.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\SimulatorCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\SimulatorFeedback.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Contracts\SimulatorIo.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\BodyMotion.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\Constants.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\HardwareError.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\LaserScan.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\Parameters.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\Platform.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\Pose2D.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\Twist.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\Vector3.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\WheelSide.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Core\WheelSpeeds.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Hal\I_Accelerometer.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Hal\I_DigitalOut.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Hal\I_DriveAxis.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Hal\I_Gyro.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Hal\I_Lidar.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Hal\Lidar_Watchdog.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Localization\I_PoseSource.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Localization\WheelOdometry.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Mission\SweepMission.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Platform\DiffDrive.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Platform\DiffDriveKinematics.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Platform\I_DifferentialDrive.TcIO">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="generated" />
+    <Folder Include="generated\Adapters" />
+    <Folder Include="generated\Adapters\Simulation" />
+    <Folder Include="generated\App" />
+    <Folder Include="generated\Contracts" />
+    <Folder Include="generated\Core" />
+    <Folder Include="generated\Hal" />
+    <Folder Include="generated\Localization" />
+    <Folder Include="generated\Mission" />
+    <Folder Include="generated\Platform" />
+  </ItemGroup>
+  <!-- st2tc:end -->
+  <ItemGroup>
+    <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
