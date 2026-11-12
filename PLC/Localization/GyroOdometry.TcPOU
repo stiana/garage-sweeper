@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="GyroOdometry" Id="{8b93f923-f0b6-444c-827c-2003794c8377}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK GyroOdometry IMPLEMENTS I_PoseSource
+VAR
+	drive : I_DifferentialDrive;
+	gyro : I_Gyro;
+	kinematics : DiffDriveKinematics;
+	_pose : Pose2D;
+	lastLeftInM : LREAL;
+	lastRightInM : LREAL;
+	lastGyroTimestampInNs : ULINT;
+	gyroBiasInRadPerS : LREAL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Connect" Id="{f3c0a70e-f313-4e6b-9893-d65ac388a212}">
+      <Declaration><![CDATA[METHOD Connect
+VAR_INPUT
+	differentialDrive : I_DifferentialDrive;
+	yawGyro : I_Gyro;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[drive := differentialDrive;
+gyro := yawGyro;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reset" Id="{29d4f7cf-2782-452f-a1c6-438de4fef24c}">
+      <Declaration><![CDATA[METHOD Reset
+VAR_INPUT
+	pose : Pose2D;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_pose := pose;
+lastLeftInM := drive.LeftWheelPositionInM;
+lastRightInM := drive.RightWheelPositionInM;
+// OPPGAVE M2 (Stian): Husk også gyroens tidsstempel nå, så første måling ikke får en enorm dt.]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{f7dc8dcb-2189-4204-bcd1-7a9237aa0207}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPPGAVE M2 (Stian): Som WheelOdometry, men kursen kommer fra gyroen i stedet for hjulforskjellen.
+// 1. Strekning: akkurat som i WheelOdometry (hjuldelta -> kinematics.ToBodyMotion), men bruk bare distanceInM.
+// 2. Kursendring: bare når gyro.IsValid og gyro.TimestampInNs er nytt siden sist.
+//    dt i sekunder = (nytt stempel - forrige) / 1E9, og kursendring = (gyro.YawRateInRadPerS - gyroBiasInRadPerS) * dt.
+//    Ingen ny måling = ingen kursendring denne syklusen.
+// 3. Flytt _pose med kursen midt i steget og normaliser, som før.
+// M2b: Når begge hjul står helt stille, roterer ikke roboten, så alt gyroen viser da er bias.
+//    La gyroBiasInRadPerS følge den sakte: bias := bias + 0.01 * (måling - bias).
+// Sett Parameters.useGyroForHeading := TRUE for å vise denne som PLC-estimatet i GUI-en.
+;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Pose" Id="{1fff3854-2fa4-4b06-b641-916fbe1f17b0}">
+      <Declaration><![CDATA[PROPERTY Pose : Pose2D]]></Declaration>
+      <Get Name="Get" Id="{98fdd20b-942a-4448-9c1a-9380a4f1130e}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Pose := _pose;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

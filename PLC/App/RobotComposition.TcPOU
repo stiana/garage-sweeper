@@ -20,6 +20,7 @@ VAR
 	lidar : Lidar_Watchdog;
 	drive : DiffDrive;
 	odometry : WheelOdometry;
+	gyroOdometry : GyroOdometry;
 	mission : SweepMission;
 
 	scan : LaserScan;
@@ -47,9 +48,11 @@ IF lidar.TryGetScan(scan) THEN
 END_IF
 
 odometry.Execute();
+gyroOdometry.Execute();
 mission.Execute();
 IF mission.TryTakePoseRequest(requestedPose) THEN
 	odometry.Reset(requestedPose);
+	gyroOdometry.Reset(requestedPose);
 END_IF
 
 IF mission.ShouldDrive THEN
@@ -90,6 +93,8 @@ lidarPower.SwitchOn();
 lidar.Start();
 odometry.Connect(drive);
 odometry.Reset(start);
+gyroOdometry.Connect(drive, gyro);
+gyroOdometry.Reset(start);
 isInitialized := TRUE;]]></ST>
       </Implementation>
     </Method>
@@ -108,13 +113,20 @@ SimulatorIo.command.isRightDriveEnabled := rightAxis.IsReady;]]></ST>
       <Declaration><![CDATA[METHOD PRIVATE PublishStatus
 VAR
 	lidarError : HardwareError;
+	estimate : Pose2D;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[lidarError := lidar.Error;
-RobotHmi.status.estimatedPose := odometry.Pose;
+        <ST><![CDATA[IF Parameters.useGyroForHeading THEN
+	estimate := gyroOdometry.Pose;
+ELSE
+	estimate := odometry.Pose;
+END_IF
+
+lidarError := lidar.Error;
+RobotHmi.status.estimatedPose := estimate;
 RobotHmi.status.isSimulatorConnected := simulator.IsConnected;
 RobotHmi.status.isLidarOk := NOT lidarError.isActive;
-SimulatorIo.command.estimatedPose := odometry.Pose;]]></ST>
+SimulatorIo.command.estimatedPose := estimate;]]></ST>
       </Implementation>
     </Method>
   </POU>

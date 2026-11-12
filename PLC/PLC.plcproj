@@ -119,6 +119,9 @@
     <Compile Include="Localization\I_PoseSource.TcIO">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Localization\GyroOdometry.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Localization\WheelOdometry.TcPOU">
       <SubType>Code</SubType>
     </Compile>
