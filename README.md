@@ -30,7 +30,7 @@ node apps/robot-server/dist/server.js           # uten PLC, kjør med tastaturet
 node apps/robot-server/dist/server.js --plc     # mot lokal TwinCAT, port 851
 ```
 
-Åpne http://localhost:8080. Med `--plc` leser serveren `SimulatorIo.command` og `RobotHmi.status` fra PLC-en via ADS og skriver tilbake sensordata. Mot en annen maskin: `--ams-net-id 5.x.y.z.1.1 --router-address <ip>`.
+Åpne http://localhost:8080. GUI-en er den samme som den frittstående, men roboten kjører i serveren, og flere nettlesere kan følge med samtidig. Endringer i garasjen sendes til serveren. Panelet *Oppdrag* har driftsknappene (start kartlegging, start feiing, gå til lader, pause, stopp og nødstopp). De er bare aktive når serveren har kontakt med PLC-en, og PLC-ens svar vises under knappene. Med `--plc` leser serveren `SimulatorIo.command` og `RobotHmi.status` fra PLC-en via ADS og skriver tilbake sensordata. Mot en annen maskin: `--ams-net-id 5.x.y.z.1.1 --router-address <ip>`.
 
 ## PLC
 
@@ -64,4 +64,4 @@ Tallene i `config/` er startpunkter og skal kalibreres mot ekte målinger.
 ## Neste steg
 
 1. Stian: `DiffDriveKinematics` og `WheelOdometry` i PLC-en (roboten står stille til `ToWheelSpeeds` er ferdig).
-2. GUI-en: servermodus med driftsknapper (start kartlegging, feiing, gå til lader).
+2. Prøve ADS-koblingen mot TwinCAT på din maskin.
