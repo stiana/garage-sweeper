@@ -1,0 +1,1 @@
+{ "id": "rplidar-a1", "name": "RPLIDAR A1", "points": 360, "rateInHz": 7, "minRangeInM": 0.15, "maxRangeInM": 12, "angleMinInRad": -3.14159265, "angleMaxInRad": 3.14159265 }

@@ -1,0 +1,1 @@
+{ "id": "rplidar-s2e", "name": "RPLIDAR S2E", "points": 1000, "rateInHz": 10, "minRangeInM": 0.05, "maxRangeInM": 30, "angleMinInRad": -3.14159265, "angleMaxInRad": 3.14159265 }

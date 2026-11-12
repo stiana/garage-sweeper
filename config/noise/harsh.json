@@ -1,0 +1,7 @@
+{
+  "name": "Tøff",
+  "odometry": { "wheelRadiusErrorLeft": 0.01, "wheelRadiusErrorRight": -0.008, "trackWidthError": 0.02, "slipSigma": 0.05 },
+  "gyro": { "biasInDegPerS": 0.3, "biasRandomWalkInDegPerSPerSqrtS": 0.02, "whiteNoiseInDegPerS": 0.1, "scaleError": 0.01 },
+  "accelerometer": { "whiteNoiseInMPerS2": 0.1 },
+  "lidar": { "rangeSigmaInM": 0.02, "rangeSigmaRelative": 0.01, "dropoutProbability": 0.05, "spuriousProbability": 0.005 }
+}

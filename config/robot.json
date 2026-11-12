@@ -1,0 +1,9 @@
+{
+  "wheelRadiusInM": 0.075,
+  "trackWidthInM": 0.4,
+  "bodyRadiusInM": 0.25,
+  "maxWheelSpeedInRadPerS": 8.0,
+  "motorTimeConstantInS": 0.08,
+  "lidarMountXInM": 0.0,
+  "lidarMountYInM": 0.0
+}

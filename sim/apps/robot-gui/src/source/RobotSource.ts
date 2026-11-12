@@ -1,0 +1,27 @@
+import type { LaserScan, Pose2D, RobotFeedback } from "@garage/sim-core";
+
+export interface PoseEstimate {
+  id: string;
+  label: string;
+  pose: Pose2D;
+}
+
+/** Everything the GUI draws, whatever the data comes from. */
+export interface RobotView {
+  /** Known only in the simulator. */
+  truePose: Pose2D | null;
+  estimates: PoseEstimate[];
+  lastScan: { scan: LaserScan; pose: Pose2D } | null;
+  feedback: RobotFeedback | null;
+  timeInS: number;
+}
+
+/**
+ * Where the GUI gets the robot from. SimulationSource today; LiveRobotSource
+ * (ADS against the real PLC) later, with the same GUI on top.
+ */
+export interface RobotSource {
+  readonly kind: "simulation" | "live";
+  update(realDeltaTimeInS: number): void;
+  readonly view: RobotView;
+}

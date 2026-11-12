@@ -1,0 +1,15 @@
+{
+  "name": "garage-sweeper-sim",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build": "npm run build --workspace apps/robot-gui",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  }
+}

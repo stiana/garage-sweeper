@@ -1,0 +1,8 @@
+{
+  "name": "Tom boks 4 x 4 m",
+  "walls": [ { "id": "outline", "points": [[0, 0], [4, 0], [4, 4], [0, 4]], "closed": true, "reflectivity": 0.8 } ],
+  "objects": [],
+  "floorZones": [],
+  "start": { "x": 2, "y": 2, "thetaInRad": 0 },
+  "dock": { "x": 2, "y": 0.35, "thetaInRad": 1.5708 }
+}
