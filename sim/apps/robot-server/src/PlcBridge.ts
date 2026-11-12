@@ -25,6 +25,23 @@ export interface PlcConnectionSettings {
 const PROTOCOL_VERSION = 4;
 const MAX_SCAN_POINTS = 1024;
 const READ_INTERVAL_IN_MS = 5;
+const LINK_LOG_HEADER = [
+  "simTimeInS",
+  "plcTimeInNs",
+  "ageInMs",
+  "leftAxisPositionInM",
+  "leftAxisVelocityInMPerS",
+  "leftAxisAccelerationInMPerS2",
+  "leftWheelPositionInM",
+  "leftWheelSetpointInMPerS",
+  "rightAxisPositionInM",
+  "rightAxisVelocityInMPerS",
+  "rightAxisAccelerationInMPerS2",
+  "rightWheelPositionInM",
+  "rightWheelSetpointInMPerS",
+  "yawRateInRadPerS",
+  "trueThetaInRad",
+];
 /** Two commands further apart than this are not one motion to measure acceleration from. */
 const MAX_ACCELERATION_DT_IN_S = 0.1;
 const STATUS_INTERVAL_IN_MS = 100;
@@ -45,6 +62,7 @@ export class PlcBridge implements RobotController {
   private commandTimeInNs = 0;
   private leftWheelAccelerationInMPerS2 = 0;
   private rightWheelAccelerationInMPerS2 = 0;
+  private linkLog: string[] | null = null;
   private readonly leftWheel: WheelFollower;
   private readonly rightWheel: WheelFollower;
   private readonly gyro = new GyroAverager();
@@ -62,7 +80,10 @@ export class PlcBridge implements RobotController {
   lastError = "";
 
   /** wheelRadiusInM: the true wheel radius of the simulated robot, from config/robot.json. */
-  constructor(settings: PlcConnectionSettings, wheelRadiusInM: number) {
+  constructor(
+    settings: PlcConnectionSettings,
+    private readonly wheelRadiusInM: number,
+  ) {
     this.leftWheel = new WheelFollower(wheelRadiusInM, STEP_IN_S);
     this.rightWheel = new WheelFollower(wheelRadiusInM, STEP_IN_S);
     this.client = new Client({
@@ -120,7 +141,7 @@ export class PlcBridge implements RobotController {
     const ageInS = Math.max(0, (feedback.timeInNs - this.commandTimeInNs) / 1e9);
     // The NC axes are the motors and encoders. The simulated wheels follow them,
     // then the simulator adds what NC cannot know: slip and collisions.
-    return {
+    const result: RobotCommand = {
       leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(
         command.leftWheelPositionInM,
         command.leftWheelVelocityInMPerS,
@@ -138,6 +159,41 @@ export class PlcBridge implements RobotController {
       isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
       isLidarPowered: command.isLidarPowered,
     };
+    this.linkLog?.push(this.linkLogRow(feedback, command, ageInS, result));
+    return result;
+  }
+
+  /** Starts recording every simulator step of the link, to see how the wheels follow NC. */
+  startLinkLog(): void {
+    this.linkLog = [LINK_LOG_HEADER.join(",")];
+  }
+
+  /** Stops recording and hands over the rows, or null when nothing was recorded. */
+  takeLinkLog(): string[] | null {
+    const log = this.linkLog;
+    this.linkLog = null;
+    return log;
+  }
+
+  private linkLogRow(feedback: RobotFeedback, command: PlcCommand, ageInS: number, result: RobotCommand): string {
+    const r = this.wheelRadiusInM;
+    return [
+      (feedback.timeInNs / 1e9).toFixed(3),
+      String(command.plcTimeInNs),
+      (ageInS * 1000).toFixed(1),
+      command.leftWheelPositionInM.toFixed(6),
+      command.leftWheelVelocityInMPerS.toFixed(5),
+      this.leftWheelAccelerationInMPerS2.toFixed(4),
+      (feedback.leftWheelAngleInRad * r).toFixed(6),
+      (result.leftWheelSetpointInRadPerS * r).toFixed(5),
+      command.rightWheelPositionInM.toFixed(6),
+      command.rightWheelVelocityInMPerS.toFixed(5),
+      this.rightWheelAccelerationInMPerS2.toFixed(4),
+      (feedback.rightWheelAngleInRad * r).toFixed(6),
+      (result.rightWheelSetpointInRadPerS * r).toFixed(5),
+      feedback.angularRateInRadPerS.z.toFixed(6),
+      feedback.truePose.thetaInRad.toFixed(6),
+    ].join(",");
   }
 
   get estimates(): PoseEstimate[] {
