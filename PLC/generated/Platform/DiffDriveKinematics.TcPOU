@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
   <POU Name="DiffDriveKinematics" Id="{79331de0-5a8b-57b6-bc0b-e22a30b63e2c}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'linkalways'}
 {attribute 'no_explicit_call' := 'Use the methods of this class'}
@@ -8,24 +8,6 @@ FUNCTION_BLOCK DiffDriveKinematics]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
-    <Method Name="ToWheelSpeeds" Id="{088634d7-9291-51c7-84cc-6014d4ff856d}">
-      <Declaration><![CDATA[METHOD ToWheelSpeeds : WheelSpeeds
-VAR_INPUT
-	desiredTwist : Twist;
-END_VAR
-VAR
-	speeds : WheelSpeeds;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// OPPGAVE M1 (Stian): Gjør robotens fart (twist) om til fart for hvert hjul, i m/s langs hjulbanen.
-// Bruk Parameters.trackWidthInM. Hjulradien trengs ikke, den ligger i NC-skaleringen.
-// Tips: hvert hjul ligger trackWidth / 2 fra midten. Når roboten roterer med yawRate,
-// får hjulet på utsiden ekstra fart lik yawRate * trackWidth / 2.
-speeds.leftInMPerS := 0;
-speeds.rightInMPerS := 0;
-ToWheelSpeeds := speeds;]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="ToBodyMotion" Id="{4216f1b7-dcf4-5184-ad60-bc9864ce41c2}">
       <Declaration><![CDATA[METHOD ToBodyMotion : BodyMotion
 VAR_INPUT
@@ -42,6 +24,22 @@ END_VAR]]></Declaration>
 motion.distanceInM := 0;
 motion.headingChangeInRad := 0;
 ToBodyMotion := motion;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ToWheelSpeeds" Id="{088634d7-9291-51c7-84cc-6014d4ff856d}">
+      <Declaration><![CDATA[METHOD ToWheelSpeeds : WheelSpeeds
+VAR_INPUT
+	desiredTwist : Twist;
+END_VAR
+VAR
+	speeds : WheelSpeeds;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[speeds.leftInMPerS := desiredTwist.forwardSpeedInMPerS - desiredTwist.yawRateInRadPerS * Parameters.trackWidthInM / 2.0;
+speeds.rightInMPerS := desiredTwist.forwardSpeedInMPerS + desiredTwist.yawRateInRadPerS * Parameters.trackWidthInM / 2.0;
+
+ToWheelSpeeds := speeds;
+]]></ST>
       </Implementation>
     </Method>
   </POU>
