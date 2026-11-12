@@ -50,6 +50,18 @@ Hjulene kjøres som NC-akser, både i simulering og på ekte maskinvare. Det er 
 
 Sporvidden, altså avstanden mellom hjulene, ligger i `Parameters.trackWidthInM` (PERSISTENT). Simulatoren har sin egen «sanne» geometri i `config/robot.json`. At den kan avvike fra det PLC-en tror, er med vilje, for det er nettopp det kalibrering handler om.
 
+### Git: skjul TmcHash-støy
+
+`garage-sweeper.tsproj` får ny `TmcHash` hver gang PLC-dataene endrer seg, selv om ingenting du bryr deg om er endret. `.gitattributes` sender derfor `.tsproj` gjennom et filter (`tools/git/tmchash-clean.sed`) som nuller ut hashen før git sammenligner. Kjør dette én gang i hver klone (Git for Windows har `sed` med seg):
+
+```
+git config filter.tmchash.clean "sed -f tools/git/tmchash-clean.sed"
+git config filter.tmchash.smudge cat
+git add --renormalize garage-sweeper.tsproj
+```
+
+Etterpå viser `git status` bare `.tsproj` når noe annet enn hashen er endret. Uten konfigen ignorerer git filteret, og alt virker som før.
+
 ## Struktur
 
 ```text
