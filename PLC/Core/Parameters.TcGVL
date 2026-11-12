@@ -7,6 +7,7 @@ VAR_GLOBAL PERSISTENT
 	// Hjulradien ligger i NC-skaleringen av aksene, som går i meter langs hjulbanen.
 	trackWidthInM : LREAL := 0.40;
 	maxWheelSpeedInMPerS : LREAL := 0.6;
+	useGyroForHeading : BOOL := FALSE;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

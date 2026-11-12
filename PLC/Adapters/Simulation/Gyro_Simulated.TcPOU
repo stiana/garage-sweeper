@@ -25,7 +25,7 @@ END_VAR]]></Declaration>
     <Method Name="StartBiasCalibration" Id="{a9e518d6-8ef0-5b9a-b66a-c86cdd4b5b62}">
       <Declaration><![CDATA[METHOD StartBiasCalibration]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// The simulated gyro has no calibration of its own. Bias is estimated in HeadingFusion.]]></ST>
+        <ST><![CDATA[// The simulated gyro has no calibration of its own. Bias is estimated in GyroOdometry.]]></ST>
       </Implementation>
     </Method>
     <Property Name="YawRateInRadPerS" Id="{6b8f2a0b-ed68-5a9b-95c6-c7e6ab0ab276}">
