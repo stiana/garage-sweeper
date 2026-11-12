@@ -34,15 +34,7 @@ node apps/robot-server/dist/server.js --plc     # mot lokal TwinCAT, port 851
 
 ## PLC
 
-Kildene ligger som lesbar tekst i `PLC/src/**/*.st`. `PLC/tools/st2tc.py` gjør dem om til TwinCAT-filer i `PLC/generated/`:
-
-```bash
-python PLC/tools/st2tc.py
-```
-
-Skriptet fører også filene inn i `PLC/PLC.plcproj`, mellom `st2tc`-markørene, og erstatter XAE sin tomme `POUs/MAIN`. I XAE: høyreklikk PLC-prosjektet og velg *Unload Project* og så *Reload Project*, eller lukk og åpne solutionen. Da dukker mappen `generated` opp. PLC-tasken går på 10 ms.
-
-Rediger `.st`-filene i `PLC/src`, ikke de genererte filene i XAE, for de skrives over neste gang skriptet kjøres.
+PLC-prosjektet heter `PLC` og ligger i `PLC/`. Koden er ordnet etter lag: `Core`, `Contracts`, `Hal`, `Platform`, `Localization`, `Mission`, `Adapters` og `App`. Rediger i XAE som vanlig. Endringer fra Claude kommer som pull requests mot de samme `.TcPOU`-filene. PLC-tasken går på 10 ms.
 
 ### NC-akser for hjulene
 
@@ -65,7 +57,7 @@ config/                     delt mellom PLC og simulator
   noise/                    støyprofiler (startverdier, ikke målt)
   lidars/                   LIDAR-profiler (anslag, juster etter datablad)
 garage-sweeper.sln          TwinCAT-solution
-PLC/src/                    PLC-kilder (.st), PLC/generated/ er laget av PLC/tools/st2tc.py
+PLC/                        TwinCAT PLC-prosjekt, mappe per lag
 sim/
   packages/sim-core/        verden, robotfysikk, sensorer, støy. Ingen DOM eller nettverk.
   packages/gui-protocol/    meldinger mellom GUI og server
