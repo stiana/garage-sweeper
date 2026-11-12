@@ -19,7 +19,7 @@ export interface PlcConnectionSettings {
   localAmsNetId?: string;
 }
 
-const PROTOCOL_VERSION = 1;
+const PROTOCOL_VERSION = 2;
 const MAX_SCAN_POINTS = 1024;
 const READ_INTERVAL_IN_MS = 5;
 const STATUS_INTERVAL_IN_MS = 100;
@@ -44,7 +44,11 @@ export class PlcBridge implements RobotController {
   status: HmiStatusJson | null = null;
   lastError = "";
 
-  constructor(settings: PlcConnectionSettings) {
+  /** The true wheel radius of the simulated robot, from config/robot.json. */
+  private readonly wheelRadiusInM: number;
+
+  constructor(settings: PlcConnectionSettings, wheelRadiusInM: number) {
+    this.wheelRadiusInM = wheelRadiusInM;
     this.client = new Client({
       targetAmsNetId: settings.targetAmsNetId,
       targetAdsPort: settings.targetAdsPort,
@@ -119,8 +123,10 @@ export class PlcBridge implements RobotController {
         throw new Error(`SimulatorIo-versjon ${command.version} i PLC-en, serveren forventer ${PROTOCOL_VERSION}`);
       }
       this.latestCommand = {
-        leftWheelSetpointInRadPerS: command.leftWheelSetpointInRadPerS,
-        rightWheelSetpointInRadPerS: command.rightWheelSetpointInRadPerS,
+        // The PLC sends what its NC axes actually do, in m/s along the wheel's rim, so the
+        // motors' dynamics live in NC. The simulator turns it into wheel rotation.
+        leftWheelSetpointInRadPerS: command.leftWheelVelocityInMPerS / this.wheelRadiusInM,
+        rightWheelSetpointInRadPerS: command.rightWheelVelocityInMPerS / this.wheelRadiusInM,
         isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
         isLidarPowered: command.isLidarPowered,
       };
@@ -159,8 +165,8 @@ export class PlcBridge implements RobotController {
 
 interface PlcCommand {
   version: number;
-  leftWheelSetpointInRadPerS: number;
-  rightWheelSetpointInRadPerS: number;
+  leftWheelVelocityInMPerS: number;
+  rightWheelVelocityInMPerS: number;
   isLeftDriveEnabled: boolean;
   isRightDriveEnabled: boolean;
   isLidarPowered: boolean;

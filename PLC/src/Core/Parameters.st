@@ -1,7 +1,7 @@
 {attribute 'qualified_only'}
 VAR_GLOBAL PERSISTENT
 	platform : PlatformKind := PlatformKind.SIMULATION;
-	wheelRadiusInM : LREAL := 0.075;
+	// Hjulradien ligger i NC-skaleringen av aksene, som går i meter langs hjulbanen.
 	trackWidthInM : LREAL := 0.40;
-	maxWheelSpeedInRadPerS : LREAL := 8.0;
+	maxWheelSpeedInMPerS : LREAL := 0.6;
 END_VAR

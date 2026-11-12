@@ -1,14 +1,15 @@
 INTERFACE I_DriveAxis
+METHOD Execute
 METHOD Enable
 METHOD Disable
 METHOD SetVelocity
 VAR_INPUT
-	velocityInRadPerS : LREAL;
+	velocityInMPerS : LREAL;
 END_VAR
 METHOD TryReset : BOOL
-PROPERTY PositionInRad : LREAL
+PROPERTY PositionInM : LREAL
 GET
-PROPERTY VelocityInRadPerS : LREAL
+PROPERTY VelocityInMPerS : LREAL
 GET
 PROPERTY IsReady : BOOL
 GET

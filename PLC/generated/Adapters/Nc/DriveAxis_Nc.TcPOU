@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="DriveAxis_Nc" Id="{58075f31-ae6c-55d9-9bba-18ced2a56d28}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK DriveAxis_Nc IMPLEMENTS I_DriveAxis
+VAR
+	axis : REFERENCE TO AXIS_REF;
+	power : MC_Power;
+	moveVelocity : MC_MoveVelocity;
+	halt : MC_Halt;
+	reset : MC_Reset;
+	isEnabled : BOOL;
+	targetInMPerS : LREAL;
+	commandedInMPerS : LREAL;
+	isHalting : BOOL;
+	notLinkedError : HardwareError := (isActive := TRUE, id := Constants.AXIS_NOT_LINKED_ERROR_ID, text := 'Aksen er ikke koblet til PLC-en');
+END_VAR
+VAR CONSTANT
+	VELOCITY_DEADBAND_IN_M_PER_S : LREAL := 0.0005;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{09113645-7804-55e5-a104-d359f03b6671}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL;
+	bInCopyCode : BOOL;
+	ncAxis : REFERENCE TO AXIS_REF;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[axis REF= ncAxis;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{d87307a6-7f2a-5ed4-ba5c-46c85598f200}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT __ISVALIDREF(axis) THEN
+	RETURN;
+END_IF
+axis.ReadStatus();
+power(Axis := axis, Enable := isEnabled, Enable_Positive := isEnabled, Enable_Negative := isEnabled, Override := 100);
+reset(Axis := axis, Execute := FALSE);
+
+IF NOT isEnabled OR NOT power.Status THEN
+	commandedInMPerS := 0;
+	isHalting := FALSE;
+	moveVelocity(Axis := axis, Execute := FALSE);
+	halt(Axis := axis, Execute := FALSE);
+	RETURN;
+END_IF
+
+IF ABS(targetInMPerS) < VELOCITY_DEADBAND_IN_M_PER_S THEN
+	IF NOT isHalting THEN
+		isHalting := TRUE;
+		commandedInMPerS := 0;
+		moveVelocity(Axis := axis, Execute := FALSE);
+		halt(Axis := axis, Execute := FALSE);
+	END_IF
+	halt(Axis := axis, Execute := TRUE);
+ELSIF isHalting OR ABS(targetInMPerS - commandedInMPerS) > VELOCITY_DEADBAND_IN_M_PER_S THEN
+	// MC_MoveVelocity starts on a rising edge, so a new speed needs Execute low, then high.
+	isHalting := FALSE;
+	commandedInMPerS := targetInMPerS;
+	halt(Axis := axis, Execute := FALSE);
+	moveVelocity(Axis := axis, Execute := FALSE);
+	moveVelocity(
+		Axis := axis,
+		Execute := TRUE,
+		Velocity := ABS(targetInMPerS),
+		Direction := SEL(targetInMPerS > 0, MC_Negative_Direction, MC_Positive_Direction));
+ELSE
+	moveVelocity(Axis := axis, Execute := TRUE);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Enable" Id="{54a49712-352b-592c-aa1e-093631c690a3}">
+      <Declaration><![CDATA[METHOD Enable]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[isEnabled := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Disable" Id="{a42dd3c8-a6f9-5e59-9dc9-b45718342fee}">
+      <Declaration><![CDATA[METHOD Disable]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[isEnabled := FALSE;
+targetInMPerS := 0;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetVelocity" Id="{4097be90-c167-5c2e-b7c7-586142938b30}">
+      <Declaration><![CDATA[METHOD SetVelocity
+VAR_INPUT
+	velocityInMPerS : LREAL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[targetInMPerS := LIMIT(-Parameters.maxWheelSpeedInMPerS, velocityInMPerS, Parameters.maxWheelSpeedInMPerS);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryReset" Id="{fd717542-ef81-5997-a385-1ec9d7002098}">
+      <Declaration><![CDATA[METHOD TryReset : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT __ISVALIDREF(axis) THEN
+	RETURN;
+END_IF
+reset(Axis := axis, Execute := TRUE);
+TryReset := NOT axis.Status.Error;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="PositionInM" Id="{d2bf73d8-d0be-5960-af2c-ffa62a514f97}">
+      <Declaration><![CDATA[PROPERTY PositionInM : LREAL]]></Declaration>
+      <Get Name="Get" Id="{60212cb1-1a24-5d01-8400-91ec4400b371}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF __ISVALIDREF(axis) THEN
+	PositionInM := axis.NcToPlc.ActPos;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="VelocityInMPerS" Id="{b4d4bd91-4ed5-50d8-918e-3104541dd033}">
+      <Declaration><![CDATA[PROPERTY VelocityInMPerS : LREAL]]></Declaration>
+      <Get Name="Get" Id="{92183764-32ca-5423-af31-2b59dbc87e04}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF __ISVALIDREF(axis) THEN
+	VelocityInMPerS := axis.NcToPlc.ActVelo;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsReady" Id="{2625a7be-3212-5377-ae55-876b9b1a6383}">
+      <Declaration><![CDATA[PROPERTY IsReady : BOOL]]></Declaration>
+      <Get Name="Get" Id="{9f6b4db9-68b1-5053-a9f7-1810f8bd4f50}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsReady := __ISVALIDREF(axis) AND_THEN power.Status AND NOT axis.Status.Error;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{aa06960f-775d-5ef8-890b-dab1f9076ab2}">
+      <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
+      <Get Name="Get" Id="{6c86eaf2-f8a7-5a40-ab6c-8e6462367c48}">
+        <Declaration><![CDATA[VAR
+	axisError : HardwareError;
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF NOT __ISVALIDREF(axis) THEN
+	Error := notLinkedError;
+ELSIF axis.Status.Error THEN
+	axisError.isActive := TRUE;
+	axisError.id := axis.Status.ErrorID;
+	axisError.text := 'NC-aksen melder feil, se feilkoden';
+	Error := axisError;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

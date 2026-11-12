@@ -37,7 +37,8 @@ const { values } = parseArgs({
 
 const noiseProfiles: Record<string, NoiseProfile> = { ideal, realistic, harsh };
 const lidarProfiles: Record<string, LidarProfile> = { "rplidar-a1": rplidarA1, "rplidar-s2e": rplidarS2e, ld19 };
-const geometry: RobotGeometry = robot;
+// With the PLC, the NC axes already model the motors, so the simulator takes their speed as it is.
+const geometry: RobotGeometry = values.plc ? { ...robot, motorTimeConstantInS: 0 } : robot;
 const world = new World(doubleGarage as unknown as WorldDefinition);
 const simulation = new Simulation({
   world,
@@ -58,7 +59,7 @@ const plc = values.plc
       targetAdsPort: Number(values["ads-port"]),
       routerAddress: values["router-address"],
       localAmsNetId: values["local-ams-net-id"],
-    })
+    }, geometry.wheelRadiusInM)
   : null;
 const controller = plc ?? new TwistController(geometry, () =>
   performance.now() - manualTwistAtInMs < DRIVE_TIMEOUT_IN_MS ? manualTwist : STOPPED,

@@ -18,13 +18,16 @@
   </PropertyGroup>
   <!-- st2tc:begin -->
   <ItemGroup>
+    <Compile Include="generated\Adapters\Nc\Axes.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="generated\Adapters\Nc\DriveAxis_Nc.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="generated\Adapters\Simulation\Accelerometer_Simulated.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="generated\Adapters\Simulation\DigitalOut_SimulatedLidarPower.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="generated\Adapters\Simulation\DriveAxis_Simulated.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="generated\Adapters\Simulation\Gyro_Simulated.TcPOU">
@@ -93,9 +96,6 @@
     <Compile Include="generated\Core\Vector3.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="generated\Core\WheelSide.TcDUT">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="generated\Core\WheelSpeeds.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -139,6 +139,7 @@
   <ItemGroup>
     <Folder Include="generated" />
     <Folder Include="generated\Adapters" />
+    <Folder Include="generated\Adapters\Nc" />
     <Folder Include="generated\Adapters\Simulation" />
     <Folder Include="generated\App" />
     <Folder Include="generated\Contracts" />
@@ -161,6 +162,10 @@
     <Folder Include="POUs" />
   </ItemGroup>
   <ItemGroup>
+    <PlaceholderReference Include="Tc2_MC2">
+      <DefaultResolution>Tc2_MC2, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_MC2</Namespace>
+    </PlaceholderReference>
     <PlaceholderReference Include="Tc2_Standard">
       <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc2_Standard</Namespace>

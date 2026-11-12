@@ -10,24 +10,24 @@ VAR
 	speeds : WheelSpeeds;
 END_VAR
 // @impl
-// OPPGAVE M1 (Stian): Gjør robotens fart (twist) om til hjulhastigheter i rad/s.
-// Bruk Parameters.wheelRadiusInM og Parameters.trackWidthInM.
+// OPPGAVE M1 (Stian): Gjør robotens fart (twist) om til fart for hvert hjul, i m/s langs hjulbanen.
+// Bruk Parameters.trackWidthInM. Hjulradien trengs ikke, den ligger i NC-skaleringen.
 // Tips: hvert hjul ligger trackWidth / 2 fra midten. Når roboten roterer med yawRate,
 // får hjulet på utsiden ekstra fart lik yawRate * trackWidth / 2.
-speeds.leftInRadPerS := 0;
-speeds.rightInRadPerS := 0;
+speeds.leftInMPerS := 0;
+speeds.rightInMPerS := 0;
 ToWheelSpeeds := speeds;
 END_METHOD
 METHOD ToBodyMotion : BodyMotion
 VAR_INPUT
-	leftDeltaInRad : LREAL;
-	rightDeltaInRad : LREAL;
+	leftDeltaInM : LREAL;
+	rightDeltaInM : LREAL;
 END_VAR
 VAR
 	motion : BodyMotion;
 END_VAR
 // @impl
-// OPPGAVE M1 (Stian): Gjør hjulrotasjon siden forrige syklus om til strekning og kursendring.
+// OPPGAVE M1 (Stian): Gjør hjulenes strekning siden forrige syklus om til robotens strekning og kursendring.
 // Den motsatte veien av ToWheelSpeeds: snittet av hjulene gir strekning,
 // forskjellen delt på sporvidden gir kursendring.
 motion.distanceInM := 0;

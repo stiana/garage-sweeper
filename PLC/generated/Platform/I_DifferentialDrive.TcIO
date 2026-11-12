@@ -2,6 +2,9 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
   <Itf Name="I_DifferentialDrive" Id="{85909425-9268-52b7-9db9-1e67d6afd42c}">
     <Declaration><![CDATA[INTERFACE I_DifferentialDrive]]></Declaration>
+    <Method Name="Execute" Id="{f5ce1296-efa5-51c7-a725-e150e3a9e895}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+    </Method>
     <Method Name="Enable" Id="{c017d325-fb79-52f8-9bdd-78a4ca5290c9}">
       <Declaration><![CDATA[METHOD Enable]]></Declaration>
     </Method>
@@ -14,15 +17,15 @@ VAR_INPUT
 	desiredTwist : Twist;
 END_VAR]]></Declaration>
     </Method>
-    <Property Name="LeftWheelPositionInRad" Id="{2615bd70-b9cd-5bd3-85aa-b453e5643152}">
-      <Declaration><![CDATA[PROPERTY LeftWheelPositionInRad : LREAL]]></Declaration>
-      <Get Name="Get" Id="{061e5763-70a6-5402-8f99-bcaea36b2436}">
+    <Property Name="LeftWheelPositionInM" Id="{5e560f46-ced9-5ae6-a71f-0b50929bfbb4}">
+      <Declaration><![CDATA[PROPERTY LeftWheelPositionInM : LREAL]]></Declaration>
+      <Get Name="Get" Id="{e19dfd2b-29be-544f-9270-8290dd09801f}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
-    <Property Name="RightWheelPositionInRad" Id="{6b7d8184-d2bc-5d9e-846d-534c5dc70c76}">
-      <Declaration><![CDATA[PROPERTY RightWheelPositionInRad : LREAL]]></Declaration>
-      <Get Name="Get" Id="{97c39443-c38e-5b00-87af-8c7b7c08baa8}">
+    <Property Name="RightWheelPositionInM" Id="{083f9cbc-56c2-56e7-999a-c7856fbac84b}">
+      <Declaration><![CDATA[PROPERTY RightWheelPositionInM : LREAL]]></Declaration>
+      <Get Name="Get" Id="{e9258df9-3486-5059-ae42-043f5c11346e}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>

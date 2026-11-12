@@ -2,6 +2,9 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
   <Itf Name="I_DriveAxis" Id="{10aea2a4-a0f9-52d9-bfb9-5a25b6bff0c4}">
     <Declaration><![CDATA[INTERFACE I_DriveAxis]]></Declaration>
+    <Method Name="Execute" Id="{1e83eb23-3ac7-570f-8c9f-0f9d28ced79d}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+    </Method>
     <Method Name="Enable" Id="{0d90f66d-ffe8-5589-b620-609e5c982203}">
       <Declaration><![CDATA[METHOD Enable]]></Declaration>
     </Method>
@@ -11,21 +14,21 @@
     <Method Name="SetVelocity" Id="{ebdf5207-0d77-5272-8477-dc32725f3a2f}">
       <Declaration><![CDATA[METHOD SetVelocity
 VAR_INPUT
-	velocityInRadPerS : LREAL;
+	velocityInMPerS : LREAL;
 END_VAR]]></Declaration>
     </Method>
     <Method Name="TryReset" Id="{7ddb3653-ef36-558c-b73c-97250a736f88}">
       <Declaration><![CDATA[METHOD TryReset : BOOL]]></Declaration>
     </Method>
-    <Property Name="PositionInRad" Id="{a510b084-bb28-5f47-9d66-9f50443a5425}">
-      <Declaration><![CDATA[PROPERTY PositionInRad : LREAL]]></Declaration>
-      <Get Name="Get" Id="{ffa62243-e9b3-589c-a28c-478f732ac69d}">
+    <Property Name="PositionInM" Id="{3ebba2b9-13aa-5538-b04e-af7dfe5b536c}">
+      <Declaration><![CDATA[PROPERTY PositionInM : LREAL]]></Declaration>
+      <Get Name="Get" Id="{17e4dc54-f244-5f17-99c1-082aa86e65e0}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
-    <Property Name="VelocityInRadPerS" Id="{b3d5ddcb-004c-547c-95f2-5598332165f1}">
-      <Declaration><![CDATA[PROPERTY VelocityInRadPerS : LREAL]]></Declaration>
-      <Get Name="Get" Id="{48c5ddaa-352b-58b7-94c3-66a0e5e4d6f9}">
+    <Property Name="VelocityInMPerS" Id="{802943f5-1cd8-55bf-8544-e49974164e4a}">
+      <Declaration><![CDATA[PROPERTY VelocityInMPerS : LREAL]]></Declaration>
+      <Get Name="Get" Id="{97ec4d4b-bb1f-5de2-96b8-ccf6bbbfa3b1}">
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
