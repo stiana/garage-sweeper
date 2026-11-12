@@ -23,6 +23,7 @@ VAR
 	mission : SweepMission;
 
 	scan : LaserScan;
+	requestedPose : Pose2D;
 	isInitialized : BOOL;
 END_VAR]]></Declaration>
     <Implementation>
@@ -47,6 +48,9 @@ END_IF
 
 odometry.Execute();
 mission.Execute();
+IF mission.TryTakePoseRequest(requestedPose) THEN
+	odometry.Reset(requestedPose);
+END_IF
 
 IF mission.ShouldDrive THEN
 	drive.Enable();

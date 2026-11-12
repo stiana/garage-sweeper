@@ -11,6 +11,8 @@ VAR
 	lastSequence : UDINT;
 	_desiredTwist : Twist;
 	_hasMap : BOOL;
+	requestedPose : Pose2D;
+	hasPoseRequest : BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
@@ -48,6 +50,15 @@ END_VAR]]></Declaration>
 
 IF code = HmiCommandCode.EMERGENCY_STOP THEN
 	_state := MissionState.EMERGENCY_STOPPED;
+	RETURN;
+END_IF
+IF code = HmiCommandCode.SET_POSE THEN
+	IF IsBusy() THEN
+		Reject('Stopp oppdraget før du setter posisjonen.');
+	ELSE
+		requestedPose := RobotHmi.command.pose;
+		hasPoseRequest := TRUE;
+	END_IF
 	RETURN;
 END_IF
 IF _state = MissionState.EMERGENCY_STOPPED AND code <> HmiCommandCode.RESET THEN
@@ -114,6 +125,20 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[Stopped := standingStill;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryTakePoseRequest" Id="{306f9d1e-d706-40a5-91e6-e021f48d4ace}">
+      <Declaration><![CDATA[METHOD TryTakePoseRequest : BOOL
+VAR_INPUT
+	pose : REFERENCE TO Pose2D;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT hasPoseRequest THEN
+	RETURN;
+END_IF
+pose := requestedPose;
+hasPoseRequest := FALSE;
+TryTakePoseRequest := TRUE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="State" Id="{dbdbf95e-8f4b-5a68-9ddb-a6be58b8826a}">

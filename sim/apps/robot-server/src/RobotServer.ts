@@ -115,9 +115,11 @@ export class RobotServer {
       }
       case "restart":
         source.restart(message.seed);
+        void plc?.setPose(simulation.truePose);
         break;
       case "realign":
         source.realign();
+        void plc?.setPose(simulation.truePose);
         break;
       case "drive":
         if (!plc) this.options.setManualTwist(message.twist);
