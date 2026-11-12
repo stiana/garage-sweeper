@@ -6,8 +6,11 @@ import {
   type RobotCommand,
   type RobotController,
   type RobotFeedback,
+  STEP_IN_S,
   STOPPED_COMMAND,
 } from "@garage/sim-core";
+import { GyroAverager } from "./GyroAverager";
+import { WheelFollower } from "./WheelFollower";
 import { HMI_COMMAND_CODES, type HmiCommandCode, type HmiStatusJson, MISSION_STATES, type PoseJson, type TwistJson } from "@garage/gui-protocol";
 
 export interface PlcConnectionSettings {
@@ -19,7 +22,7 @@ export interface PlcConnectionSettings {
   localAmsNetId?: string;
 }
 
-const PROTOCOL_VERSION = 2;
+const PROTOCOL_VERSION = 3;
 const MAX_SCAN_POINTS = 1024;
 const READ_INTERVAL_IN_MS = 5;
 const STATUS_INTERVAL_IN_MS = 100;
@@ -34,7 +37,11 @@ const ORIGIN: PoseJson = { x: 0, y: 0, thetaInRad: 0 };
  */
 export class PlcBridge implements RobotController {
   private readonly client: Client;
-  private latestCommand: RobotCommand = STOPPED_COMMAND;
+  private latestCommand: PlcCommand | null = null;
+  private lastFeedbackTimeInNs: number | null = null;
+  private readonly leftWheel: WheelFollower;
+  private readonly rightWheel: WheelFollower;
+  private readonly gyro = new GyroAverager();
   private estimatedPose: Pose2D | null = null;
   private pendingFeedback: RobotFeedback | null = null;
   private pendingScan: LaserScan | null = null;
@@ -48,11 +55,10 @@ export class PlcBridge implements RobotController {
   status: HmiStatusJson | null = null;
   lastError = "";
 
-  /** The true wheel radius of the simulated robot, from config/robot.json. */
-  private readonly wheelRadiusInM: number;
-
+  /** wheelRadiusInM: the true wheel radius of the simulated robot, from config/robot.json. */
   constructor(settings: PlcConnectionSettings, wheelRadiusInM: number) {
-    this.wheelRadiusInM = wheelRadiusInM;
+    this.leftWheel = new WheelFollower(wheelRadiusInM);
+    this.rightWheel = new WheelFollower(wheelRadiusInM);
     this.client = new Client({
       targetAmsNetId: settings.targetAmsNetId,
       targetAdsPort: settings.targetAdsPort,
@@ -70,6 +76,8 @@ export class PlcBridge implements RobotController {
       try {
         if (!this.client.connection.connected) await this.client.connect();
         await this.initializeHmiSequence();
+        this.leftWheel.reanchor();
+        this.rightWheel.reanchor();
         this.isConnected = true;
         this.lastError = "";
         this.onConnected();
@@ -90,10 +98,27 @@ export class PlcBridge implements RobotController {
 
   /** Called by the simulation every step. Hands back the PLC's latest command and queues the sensor data. */
   exchange(feedback: RobotFeedback): RobotCommand {
+    if (this.lastFeedbackTimeInNs !== null && feedback.timeInNs < this.lastFeedbackTimeInNs) {
+      // The simulation restarted and put the wheels back to 0.
+      this.leftWheel.reanchor();
+      this.rightWheel.reanchor();
+    }
+    this.lastFeedbackTimeInNs = feedback.timeInNs;
+    this.gyro.add(feedback.timeInNs, feedback.angularRateInRadPerS.z);
     this.pendingFeedback = feedback;
     if (feedback.scan) this.pendingScan = feedback.scan;
     void this.flush();
-    return this.isConnected ? this.latestCommand : STOPPED_COMMAND;
+
+    const command = this.latestCommand;
+    if (!this.isConnected || !command) return STOPPED_COMMAND;
+    // The NC axes are the motors and encoders. The simulated wheels follow their
+    // position, then the simulator adds what NC cannot know: slip and collisions.
+    return {
+      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(command.leftWheelPositionInM, feedback.leftWheelAngleInRad, STEP_IN_S),
+      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(command.rightWheelPositionInM, feedback.rightWheelAngleInRad, STEP_IN_S),
+      isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
+      isLidarPowered: command.isLidarPowered,
+    };
   }
 
   get estimates(): PoseEstimate[] {
@@ -134,14 +159,7 @@ export class PlcBridge implements RobotController {
       if (command.version !== PROTOCOL_VERSION) {
         throw new Error(`SimulatorIo-versjon ${command.version} i PLC-en, serveren forventer ${PROTOCOL_VERSION}`);
       }
-      this.latestCommand = {
-        // The PLC sends what its NC axes actually do, in m/s along the wheel's rim, so the
-        // motors' dynamics live in NC. The simulator turns it into wheel rotation.
-        leftWheelSetpointInRadPerS: command.leftWheelVelocityInMPerS / this.wheelRadiusInM,
-        rightWheelSetpointInRadPerS: command.rightWheelVelocityInMPerS / this.wheelRadiusInM,
-        isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
-        isLidarPowered: command.isLidarPowered,
-      };
+      this.latestCommand = command;
       const pose = command.estimatedPose;
       this.estimatedPose = new Pose2D(pose.x, pose.y, pose.thetaInRad);
 
@@ -164,8 +182,9 @@ export class PlcBridge implements RobotController {
         const scan = this.pendingScan;
         this.pendingFeedback = null;
         this.pendingScan = null;
+        const yawRate = feedback && this.gyro.takeAverage(feedback.timeInNs, feedback.angularRateInRadPerS.z);
         if (scan) await this.client.writeValue("SimulatorIo.scan", toPlcScan(scan));
-        if (feedback) await this.client.writeValue("SimulatorIo.feedback", toPlcFeedback(feedback));
+        if (feedback) await this.client.writeValue("SimulatorIo.feedback", toPlcFeedback(feedback, yawRate ?? 0));
       }
     } catch (error) {
       this.lastError = (error as Error).message;
@@ -177,8 +196,8 @@ export class PlcBridge implements RobotController {
 
 interface PlcCommand {
   version: number;
-  leftWheelVelocityInMPerS: number;
-  rightWheelVelocityInMPerS: number;
+  leftWheelPositionInM: number;
+  rightWheelPositionInM: number;
   isLeftDriveEnabled: boolean;
   isRightDriveEnabled: boolean;
   isLidarPowered: boolean;
@@ -187,7 +206,7 @@ interface PlcCommand {
 
 type PlcStatus = Omit<HmiStatusJson, "missionState"> & { missionState: number };
 
-function toPlcFeedback(feedback: RobotFeedback) {
+function toPlcFeedback(feedback: RobotFeedback, averageYawRateInRadPerS: number) {
   return {
     version: PROTOCOL_VERSION,
     sequence: feedback.sequence >>> 0,
@@ -196,7 +215,7 @@ function toPlcFeedback(feedback: RobotFeedback) {
     rightWheelAngleInRad: feedback.rightWheelAngleInRad,
     leftWheelVelocityInRadPerS: feedback.leftWheelVelocityInRadPerS,
     rightWheelVelocityInRadPerS: feedback.rightWheelVelocityInRadPerS,
-    angularRateInRadPerS: feedback.angularRateInRadPerS,
+    angularRateInRadPerS: { ...feedback.angularRateInRadPerS, z: averageYawRateInRadPerS },
     accelerationInMPerS2: feedback.accelerationInMPerS2,
     truePose: { x: feedback.truePose.x, y: feedback.truePose.y, thetaInRad: feedback.truePose.thetaInRad },
     collided: feedback.collided,

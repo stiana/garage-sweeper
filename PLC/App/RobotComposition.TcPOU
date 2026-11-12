@@ -101,10 +101,10 @@ isInitialized := TRUE;]]></ST>
     <Method Name="SendWheelsToSimulator" Id="{8f10f9af-3837-5fb5-8260-2457f9c12315}">
       <Declaration><![CDATA[METHOD PRIVATE SendWheelsToSimulator]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// I simuleringen er NC-aksene motor og enkoder. Simulatoren får vite hvor fort hjulene faktisk går,
-// og flytter roboten etter det, med sluring og kollisjoner.
-SimulatorIo.command.leftWheelVelocityInMPerS := leftAxis.VelocityInMPerS;
-SimulatorIo.command.rightWheelVelocityInMPerS := rightAxis.VelocityInMPerS;
+        <ST><![CDATA[// I simuleringen er NC-aksene motor og enkoder. Simulatoren får vite hvor langt hjulene faktisk har gått,
+// lar de simulerte hjulene følge det nøyaktig, og flytter roboten etter det, med sluring og kollisjoner.
+SimulatorIo.command.leftWheelPositionInM := leftAxis.PositionInM;
+SimulatorIo.command.rightWheelPositionInM := rightAxis.PositionInM;
 SimulatorIo.command.isLeftDriveEnabled := leftAxis.IsReady;
 SimulatorIo.command.isRightDriveEnabled := rightAxis.IsReady;]]></ST>
       </Implementation>
