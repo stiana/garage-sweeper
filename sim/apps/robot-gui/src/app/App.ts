@@ -1,5 +1,9 @@
-import { Simulation, SimulationSource, Vec2, World, type BodyCondition, type PlacedShape, type PoseEstimate, type WorldDefinition } from "@garage/sim-core";
-import { lidarProfiles, noiseProfiles, robotGeometry, worlds } from "../configs";
+import { Vec2, type BodyCondition, type PlacedShape, type PoseEstimate, type World, type WorldDefinition } from "@garage/sim-core";
+import type { HmiCommandCode } from "@garage/gui-protocol";
+import type { Backend } from "../backend/Backend";
+import { LocalBackend } from "../backend/LocalBackend";
+import { RemoteBackend } from "../backend/RemoteBackend";
+import { robotGeometry, worlds } from "../configs";
 import { KeyboardController } from "../input/KeyboardController";
 import { PointerTools, type Selection, type Tool } from "../input/PointerTools";
 import { MapAnnotations } from "../source/MapAnnotations";
@@ -13,10 +17,8 @@ const READOUT_INTERVAL_IN_MS = 100;
 
 /** Wires the simulator, the input tools, the canvas and the side panel together. */
 export class App {
-  private world: World;
-  private readonly simulation: Simulation;
   private readonly controller = new KeyboardController(robotGeometry);
-  private readonly source: SimulationSource;
+  private readonly backend: Backend;
   private readonly annotations = new MapAnnotations();
   private readonly camera = new Camera();
   private readonly renderer: Renderer;
@@ -28,15 +30,16 @@ export class App {
   private objectCounter = 0;
 
   constructor() {
-    this.world = new World(worlds["double-garage"]!);
-    this.simulation = new Simulation({
-      world: this.world,
-      geometry: robotGeometry,
-      noise: noiseProfiles.realistic!,
-      lidarProfile: lidarProfiles["rplidar-s2e"]!,
-      seed: 42,
-    });
-    this.source = new SimulationSource(this.simulation, this.controller);
+    const initialWorld = worlds["double-garage"]!;
+    this.backend = isServed()
+      ? new RemoteBackend(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`, initialWorld, this.controller)
+      : new LocalBackend(initialWorld, this.controller);
+    this.backend.onWorldReplaced = () => {
+      this.tools.select(null);
+      this.fitView();
+      this.writeWorldJson();
+    };
+    this.backend.onConnectionChanged = (message) => this.say(message);
     const canvas = byId<HTMLCanvasElement>("view");
     this.renderer = new Renderer(canvas, this.camera);
     this.plot = new ErrorPlot(byId<HTMLCanvasElement>("error-plot"));
@@ -45,8 +48,8 @@ export class App {
       annotations: this.annotations,
       camera: this.camera,
       canvasSize: () => this.renderer.size,
-      truePose: () => this.simulation.truePose,
-      kidnap: (pose) => this.simulation.kidnap(pose),
+      truePose: () => this.backend.view.truePose,
+      kidnap: (pose) => this.backend.kidnap(pose),
       onSelectionChanged: (selection) => this.showSelection(selection),
       onToolChanged: (tool) => this.showTool(tool),
       onWorldEdited: () => this.refreshSelectionForm(),
@@ -62,6 +65,7 @@ export class App {
     this.renderer.resize();
     this.fitView();
     this.showSelection(null);
+    this.showMode();
     this.writeWorldJson();
     requestAnimationFrame((t) => this.frame(t));
   }
@@ -69,8 +73,8 @@ export class App {
   private frame(nowInMs: number): void {
     const deltaInS = (nowInMs - this.lastFrameInMs) / 1000;
     this.lastFrameInMs = nowInMs;
-    this.source.update(deltaInS);
-    this.renderer.draw(this.world, this.source.view, this.source.hitMap, this.annotations, this.layers, {
+    this.backend.update(deltaInS);
+    this.renderer.draw(this.world, this.backend.view, this.backend.hitMap, this.annotations, this.layers, {
       selectedId: this.tools.selection?.id ?? null,
       draft: this.tools.draft,
       bodyRadiusInM: robotGeometry.bodyRadiusInM,
@@ -82,8 +86,13 @@ export class App {
     requestAnimationFrame((t) => this.frame(t));
   }
 
+  private get world(): World {
+    return this.backend.world;
+  }
+
   private fitView(): void {
     const points = this.world.walls.flatMap((w) => w.points);
+    if (points.length === 0) return;
     const xs = points.map(([x]) => x);
     const ys = points.map(([, y]) => y);
     const { width, height } = this.renderer.size;
@@ -91,9 +100,7 @@ export class App {
   }
 
   private loadWorld(definition: WorldDefinition): void {
-    this.world = new World(definition);
-    this.simulation.setWorld(this.world);
-    this.source.restart();
+    this.backend.loadWorld(definition);
     this.tools.select(null);
     this.fitView();
     this.writeWorldJson();
@@ -104,22 +111,28 @@ export class App {
   private bindPanel(): void {
     const pause = byId<HTMLButtonElement>("pause");
     pause.addEventListener("click", () => {
-      this.source.isPaused = !this.source.isPaused;
-      pause.textContent = this.source.isPaused ? "Fortsett" : "Pause";
-      pause.setAttribute("aria-pressed", String(this.source.isPaused));
+      this.backend.isPaused = !this.backend.isPaused;
+      pause.textContent = this.backend.isPaused ? "Fortsett" : "Pause";
+      pause.setAttribute("aria-pressed", String(this.backend.isPaused));
     });
     byId("step").addEventListener("click", () => {
-      this.source.isPaused = true;
+      this.backend.isPaused = true;
       pause.textContent = "Fortsett";
       pause.setAttribute("aria-pressed", "true");
-      for (let i = 0; i < 10; i++) this.source.stepOnce();
+      for (let i = 0; i < 10; i++) this.backend.stepOnce();
     });
     byId("restart").addEventListener("click", () => {
       this.controller.stop();
-      this.source.restart();
+      this.backend.restart();
     });
     byId<HTMLSelectElement>("speed").addEventListener("change", (e) => {
-      this.source.speedFactor = Number((e.target as HTMLSelectElement).value);
+      this.backend.speedFactor = Number((e.target as HTMLSelectElement).value);
+    });
+    document.querySelectorAll<HTMLButtonElement>("[data-hmi]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.hmi === "EMERGENCY_STOP") this.controller.stop();
+        this.backend.sendHmi(button.dataset.hmi as HmiCommandCode);
+      });
     });
     byId("fit-view").addEventListener("click", () => this.fitView());
 
@@ -153,35 +166,44 @@ export class App {
     byId("load-world").addEventListener("click", () => this.loadWorldFromText());
 
     const noiseSelect = byId<HTMLSelectElement>("noise-select");
-    noiseSelect.addEventListener("change", () => this.simulation.setNoise(noiseProfiles[noiseSelect.value]!));
+    noiseSelect.addEventListener("change", () => this.backend.setNoise(noiseSelect.value));
     const lidarSelect = byId<HTMLSelectElement>("lidar-select");
-    lidarSelect.addEventListener("change", () => this.simulation.setLidarProfile(lidarProfiles[lidarSelect.value]!));
+    lidarSelect.addEventListener("change", () => this.backend.setLidar(lidarSelect.value));
     const seed = byId<HTMLInputElement>("seed");
-    seed.addEventListener("change", () => this.source.restart(Number(seed.value) || 1));
+    seed.addEventListener("change", () => this.backend.restart(Number(seed.value) || 1));
     byId("new-seed").addEventListener("click", () => {
       seed.value = String(1 + Math.floor(Math.random() * 99999));
-      this.source.restart(Number(seed.value));
+      this.backend.restart(Number(seed.value));
     });
 
     bindToggle("show-rays", (on) => (this.layers.showRays = on));
     bindToggle("scan-at-estimate", (on) => (this.layers.scanAtTruePose = !on));
     bindToggle("show-hitmap", (on) => (this.layers.showHitMap = on));
     bindToggle("show-estimates", (on) => (this.layers.showEstimates = on));
-    byId("clear-hitmap").addEventListener("click", () => this.source.hitMap.clear());
+    byId("clear-hitmap").addEventListener("click", () => this.backend.hitMap.clear());
 
-    bindToggle("fault-lidar", (on) => (this.simulation.faults.isLidarSignalLost = on));
-    bindToggle("fault-gyro", (on) => (this.simulation.faults.isGyroFrozen = on));
+    const lidarFault = bindToggle("fault-lidar", () => this.sendFaults(lidarFault, gyroFault));
+    const gyroFault = bindToggle("fault-gyro", () => this.sendFaults(lidarFault, gyroFault));
     const lift = bindToggle("fault-lift", (on) => this.setCondition(on ? "lifted" : "normal", tip));
     const tip = bindToggle("fault-tip", (on) => this.setCondition(on ? "tipped" : "normal", lift));
     byId("realign").addEventListener("click", () => {
-      this.source.realign();
-      this.source.hitMap.clear();
+      this.backend.realign();
+      this.backend.hitMap.clear();
     });
+  }
+
+  private sendFaults(lidar: HTMLButtonElement, gyro: HTMLButtonElement): void {
+    this.backend.setFaults(lidar.getAttribute("aria-pressed") === "true", gyro.getAttribute("aria-pressed") === "true");
+  }
+
+  /** Shows what only makes sense where the robot runs: pause and speed here, mission buttons with a PLC. */
+  private showMode(): void {
+    document.querySelectorAll<HTMLElement>(".only-local").forEach((el) => (el.hidden = !this.backend.canPause));
   }
 
   private setCondition(condition: BodyCondition, other: HTMLButtonElement): void {
     other.setAttribute("aria-pressed", "false");
-    this.simulation.setCondition(condition);
+    this.backend.setCondition(condition);
   }
 
   private addObject(kind: string): void {
@@ -320,30 +342,55 @@ export class App {
   // ---- Readouts ---------------------------------------------------------
 
   private updateReadouts(): void {
-    const view = this.source.view;
-    const feedback = view.feedback;
+    const view = this.backend.view;
+    const telemetry = this.backend.telemetry;
     const truth = view.truePose;
-    const wheels = view.estimates.find((e: PoseEstimate) => e.id === "wheels")!.pose;
-    const gyro = view.estimates.find((e: PoseEstimate) => e.id === "gyro")!.pose;
+    const find = (id: string) => view.estimates.find((e: PoseEstimate) => e.id === id)?.pose;
+    const errorText = (id: string) => {
+      const estimate = find(id);
+      return estimate && truth ? `${cm(estimate.distanceTo(truth))} · ${signedDegrees(estimate.headingErrorTo(truth))}` : "–";
+    };
     text("m-time", formatTime(view.timeInS));
-    if (truth) {
-      text("m-true", `${truth.x.toFixed(2)}, ${truth.y.toFixed(2)} m · ${degrees(truth.thetaInRad)}°`);
-      text("m-wheels", `${cm(wheels.distanceTo(truth))} · ${signedDegrees(wheels.headingErrorTo(truth))}`);
-      text("m-gyro", `${cm(gyro.distanceTo(truth))} · ${signedDegrees(gyro.headingErrorTo(truth))}`);
-    }
-    text("m-scans", `${this.source.scanCount}`);
-    text("m-collisions", `${this.source.collisionCount}`);
-    if (feedback) {
-      text("m-yawrate", `${((feedback.angularRateInRadPerS.z * 180) / Math.PI).toFixed(2)} °/s`);
-      text("m-accel", `${feedback.accelerationInMPerS2.x.toFixed(1)}, ${feedback.accelerationInMPerS2.y.toFixed(1)}, ${feedback.accelerationInMPerS2.z.toFixed(1)}`);
-    }
+    if (truth) text("m-true", `${truth.x.toFixed(2)}, ${truth.y.toFixed(2)} m · ${degrees(truth.thetaInRad)}°`);
+    text("m-wheels", errorText("wheels"));
+    text("m-gyro", errorText("gyro"));
+    text("m-plc", errorText("plc"));
+    text("m-scans", `${telemetry.scanCount}`);
+    text("m-collisions", `${telemetry.collisionCount}`);
+    text("m-yawrate", `${((telemetry.yawRateInRadPerS * 180) / Math.PI).toFixed(2)} °/s`);
+    text("m-accel", telemetry.accelerationInMPerS2.map((a) => a.toFixed(1)).join(", "));
 
-    const lidarOk = !this.simulation.faults.isLidarSignalLost && this.simulation.condition !== "tipped";
+    const condition = telemetry.condition;
+    const lidarOk = !telemetry.isLidarSignalLost && condition !== "tipped";
     chip("chip-lidar", lidarOk ? "LIDAR ok" : "LIDAR borte", lidarOk ? "good" : "bad");
-    const condition = this.simulation.condition;
     chip("chip-body", condition === "normal" ? "På gulvet" : condition === "lifted" ? "Løftet" : "Veltet", condition === "normal" ? "good" : "bad");
-    chip("chip-collision", feedback?.collided ? "Kollisjon" : "Fri bane", feedback?.collided ? "warn" : "good");
-    this.plot.draw(this.source.history, readCanvasTheme());
+    chip("chip-collision", telemetry.collided ? "Kollisjon" : "Fri bane", telemetry.collided ? "warn" : "good");
+    this.updateMission();
+    this.plot.draw(this.backend.history, readCanvasTheme());
+  }
+
+  private updateMission(): void {
+    const plc = this.backend.plc;
+    const status = plc?.isConnected ? plc.status : null;
+    const mode = this.backend.mode;
+    byId("legend-plc").hidden = mode !== "plc";
+    chip(
+      "chip-plc",
+      mode === "local" ? "Lokal simulering" : mode === "standalone" ? "Server uten PLC" : status ? "PLC tilkoblet" : "Venter på PLC",
+      mode === "plc" && !status ? "warn" : "good",
+    );
+    text("mission-state", status ? missionLabels[status.missionState] : "–");
+    text("mission-rejection", status?.lastRejection ?? "");
+    const reason =
+      mode === "local"
+        ? "Driftsknappene styrer PLC-en. Start robot-serveren med --plc for å bruke dem."
+        : mode === "standalone"
+          ? "Serveren kjører uten PLC. Start den med --plc for å bruke driftsknappene."
+          : status
+            ? ""
+            : "Serveren finner ikke PLC-en. Sjekk at TwinCAT kjører og at AMS Net ID stemmer.";
+    text("mission-note", reason);
+    document.querySelectorAll<HTMLButtonElement>("[data-hmi]").forEach((button) => (button.disabled = !status));
   }
 
   private watchTheme(): void {
@@ -351,6 +398,22 @@ export class App {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refresh);
     new MutationObserver(refresh).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
   }
+}
+
+const missionLabels: Record<string, string> = {
+  IDLE: "Venter",
+  MANUAL: "Manuell kjøring",
+  MAPPING: "Kartlegger",
+  SWEEPING: "Feier",
+  PAUSED: "Pause",
+  RETURNING_TO_DOCK: "Kjører til lader",
+  DOCKED: "I laderen",
+  EMERGENCY_STOPPED: "Nødstoppet",
+};
+
+/** The robot server marks the page it serves, so the GUI knows to connect back to it. */
+function isServed(): boolean {
+  return (window as unknown as { ROBOT_SERVER?: boolean }).ROBOT_SERVER === true;
 }
 
 function byId<T extends HTMLElement = HTMLElement>(id: string): T {

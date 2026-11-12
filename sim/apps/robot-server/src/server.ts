@@ -47,7 +47,11 @@ const simulation = new Simulation({
   seed: Number(values.seed),
 });
 
-let manualTwist: TwistSetpoint = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
+const STOPPED: TwistSetpoint = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
+/** Manual driving stops by itself if the GUI goes quiet, for example when the browser tab closes. */
+const DRIVE_TIMEOUT_IN_MS = 300;
+let manualTwist = STOPPED;
+let manualTwistAtInMs = 0;
 const plc = values.plc
   ? new PlcBridge({
       targetAmsNetId: values["ams-net-id"]!,
@@ -56,7 +60,9 @@ const plc = values.plc
       localAmsNetId: values["local-ams-net-id"],
     })
   : null;
-const controller = plc ?? new TwistController(geometry, () => manualTwist);
+const controller = plc ?? new TwistController(geometry, () =>
+  performance.now() - manualTwistAtInMs < DRIVE_TIMEOUT_IN_MS ? manualTwist : STOPPED,
+);
 const source = new SimulationSource(simulation, controller);
 if (plc) source.extraEstimates = () => plc.estimates;
 
@@ -70,7 +76,10 @@ new RobotServer({
   noiseProfiles,
   lidarProfiles,
   plc,
-  setManualTwist: (twist) => (manualTwist = twist),
+  setManualTwist: (twist) => {
+    manualTwist = twist;
+    manualTwistAtInMs = performance.now();
+  },
 }).listen();
 
 if (plc) {
