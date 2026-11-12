@@ -18,6 +18,8 @@ VAR
 	notLinkedError : HardwareError := (isActive := TRUE, id := Constants.AXIS_NOT_LINKED_ERROR_ID, text := 'Aksen er ikke koblet til PLC-en');
 END_VAR
 VAR CONSTANT
+	// NC refuses set velocities below 0.001 (axis unit/s), so anything slower is a stop.
+	MIN_VELOCITY_IN_M_PER_S : LREAL := 0.001;
 	VELOCITY_DEADBAND_IN_M_PER_S : LREAL := 0.0005;
 END_VAR]]></Declaration>
     <Implementation>
@@ -52,7 +54,7 @@ IF NOT isEnabled OR NOT power.Status THEN
 	RETURN;
 END_IF
 
-IF ABS(targetInMPerS) < VELOCITY_DEADBAND_IN_M_PER_S THEN
+IF ABS(targetInMPerS) < MIN_VELOCITY_IN_M_PER_S THEN
 	IF NOT isHalting THEN
 		isHalting := TRUE;
 		commandedInMPerS := 0;
