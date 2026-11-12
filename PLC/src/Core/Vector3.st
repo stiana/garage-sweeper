@@ -1,7 +1,0 @@
-TYPE Vector3 :
-STRUCT
-	x : LREAL;
-	y : LREAL;
-	z : LREAL;
-END_STRUCT
-END_TYPE

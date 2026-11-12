@@ -1,6 +1,0 @@
-TYPE WheelSpeeds :
-STRUCT
-	leftInMPerS : LREAL;
-	rightInMPerS : LREAL;
-END_STRUCT
-END_TYPE

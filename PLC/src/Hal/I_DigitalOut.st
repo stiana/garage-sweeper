@@ -1,5 +1,0 @@
-INTERFACE I_DigitalOut
-METHOD SwitchOn
-METHOD SwitchOff
-PROPERTY IsOn : BOOL
-GET
