@@ -28,6 +28,7 @@
   "include": [
     "packages/*/src",
     "packages/*/test",
-    "apps/*/src"
+    "apps/*/src",
+    "apps/*/test"
   ]
 }
