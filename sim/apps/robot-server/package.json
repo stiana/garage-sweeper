@@ -1,0 +1,19 @@
+{
+  "name": "@garage/robot-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node build.mjs && node dist/server.js",
+    "start:plc": "node build.mjs && node dist/server.js --plc"
+  },
+  "dependencies": {
+    "ads-client": "2.1.0",
+    "ws": "8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/ws": "8.5.13"
+  }
+}

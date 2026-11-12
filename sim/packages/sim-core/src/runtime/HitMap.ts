@@ -1,4 +1,6 @@
-import { type LaserScan, type Pose2D, Vec2 } from "@garage/sim-core";
+import type { Pose2D } from "../math/Pose2D";
+import { Vec2 } from "../math/Vec2";
+import type { LaserScan } from "../sensors/LaserScan";
 
 /**
  * A simple grid that counts LIDAR hits, drawn at the pose the robot believes

@@ -1,9 +1,8 @@
-import { Simulation, Vec2, World, type BodyCondition, type PlacedShape, type WorldDefinition } from "@garage/sim-core";
+import { Simulation, SimulationSource, Vec2, World, type BodyCondition, type PlacedShape, type PoseEstimate, type WorldDefinition } from "@garage/sim-core";
 import { lidarProfiles, noiseProfiles, robotGeometry, worlds } from "../configs";
 import { KeyboardController } from "../input/KeyboardController";
 import { PointerTools, type Selection, type Tool } from "../input/PointerTools";
 import { MapAnnotations } from "../source/MapAnnotations";
-import { SimulationSource } from "../source/SimulationSource";
 import { ErrorPlot } from "../ui/ErrorPlot";
 import { Camera } from "../view/Camera";
 import { Renderer, type Layers } from "../view/Renderer";
@@ -324,8 +323,8 @@ export class App {
     const view = this.source.view;
     const feedback = view.feedback;
     const truth = view.truePose;
-    const wheels = view.estimates.find((e) => e.id === "wheels")!.pose;
-    const gyro = view.estimates.find((e) => e.id === "gyro")!.pose;
+    const wheels = view.estimates.find((e: PoseEstimate) => e.id === "wheels")!.pose;
+    const gyro = view.estimates.find((e: PoseEstimate) => e.id === "gyro")!.pose;
     text("m-time", formatTime(view.timeInS));
     if (truth) {
       text("m-true", `${truth.x.toFixed(2)}, ${truth.y.toFixed(2)} m · ${degrees(truth.thetaInRad)}°`);

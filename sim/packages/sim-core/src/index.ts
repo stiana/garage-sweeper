@@ -16,3 +16,7 @@ export * from "./simulation/Simulation";
 export * from "./world/geometry";
 export * from "./world/types";
 export * from "./world/World";
+export * from "./runtime/HitMap";
+export * from "./runtime/RobotSource";
+export * from "./runtime/SimulationSource";
+export * from "./runtime/TwistController";

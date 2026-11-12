@@ -1,4 +1,4 @@
-import type { ErrorSample } from "../source/SimulationSource";
+import type { ErrorSample } from "@garage/sim-core";
 import type { CanvasTheme } from "../view/theme";
 
 /** Small chart of position error over the last minute, one line per estimate. */

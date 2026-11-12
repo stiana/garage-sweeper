@@ -16,7 +16,10 @@ const options = {
   target: "es2022",
   minify: !watch,
   write: false,
-  alias: { "@garage/sim-core": resolve(here, "../../packages/sim-core/src/index.ts") },
+  alias: {
+    "@garage/sim-core": resolve(here, "../../packages/sim-core/src/index.ts"),
+    "@garage/gui-protocol": resolve(here, "../../packages/gui-protocol/src/index.ts"),
+  },
   plugins: [{
     name: "write-html",
     setup(builder) {

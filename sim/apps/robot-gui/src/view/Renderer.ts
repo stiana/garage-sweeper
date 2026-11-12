@@ -1,7 +1,5 @@
-import { type PlacedShape, type Pose2D, Vec2, type World, rectCorners } from "@garage/sim-core";
+import { type HitMap, type PlacedShape, type Pose2D, type RobotView, Vec2, type World, rectCorners } from "@garage/sim-core";
 import type { MapAnnotations } from "../source/MapAnnotations";
-import type { HitMap } from "../source/HitMap";
-import type { RobotView } from "../source/RobotSource";
 import type { Camera } from "./Camera";
 import { type CanvasTheme, readCanvasTheme } from "./theme";
 
@@ -68,7 +66,8 @@ export class Renderer {
     }
     if (layers.showEstimates) {
       for (const estimate of view.estimates) {
-        this.drawRobot(estimate.pose, overlay.bodyRadiusInM, estimate.id === "gyro" ? t.gyro : t.wheels, true);
+        const color = estimate.id === "gyro" ? t.gyro : estimate.id === "plc" ? t.plc : t.wheels;
+        this.drawRobot(estimate.pose, overlay.bodyRadiusInM, color, estimate.id !== "plc");
       }
     }
     if (view.truePose) this.drawRobot(view.truePose, overlay.bodyRadiusInM, t.truth, false);

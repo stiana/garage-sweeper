@@ -64,6 +64,12 @@ export class World {
     return new Pose2D(d.x, d.y, d.thetaInRad);
   }
 
+  /** Replaces the whole garage in place, so a running simulation keeps going. */
+  replace(definition: WorldDefinition): void {
+    this.definition = structuredClone(definition);
+    this.touch();
+  }
+
   toDefinition(): WorldDefinition {
     return structuredClone(this.definition);
   }

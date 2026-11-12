@@ -1,15 +1,10 @@
-import {
-  DeadReckoning,
-  type LaserScan,
-  type Pose2D,
-  type RobotController,
-  type RobotFeedback,
-  STEP_IN_S,
-  STOPPED_COMMAND,
-  Simulation,
-} from "@garage/sim-core";
+import type { Pose2D } from "../math/Pose2D";
+import { DeadReckoning } from "../reference/DeadReckoning";
+import type { LaserScan } from "../sensors/LaserScan";
+import { type RobotController, type RobotFeedback, STOPPED_COMMAND } from "../simulation/RobotIo";
+import { STEP_IN_S, type Simulation } from "../simulation/Simulation";
 import { HitMap } from "./HitMap";
-import type { RobotSource, RobotView } from "./RobotSource";
+import type { PoseEstimate, RobotSource, RobotView } from "./RobotSource";
 
 export interface ErrorSample {
   timeInS: number;
@@ -38,6 +33,9 @@ export class SimulationSource implements RobotSource {
   private nextHistoryInS = 0;
   private wasColliding = false;
 
+  /** Lets a controller with its own estimate (the PLC) show it next to the reference estimates. */
+  extraEstimates: () => PoseEstimate[] = () => [];
+
   constructor(readonly simulation: Simulation, private readonly controller: RobotController) {
     this.wheelOdometry = new DeadReckoning(simulation.geometry, simulation.truePose, "wheels");
     this.gyroOdometry = new DeadReckoning(simulation.geometry, simulation.truePose, "gyro");
@@ -50,6 +48,7 @@ export class SimulationSource implements RobotSource {
       estimates: [
         { id: "wheels", label: "Odometri, kun hjul", pose: this.wheelOdometry.pose },
         { id: "gyro", label: "Odometri, hjul + gyro", pose: this.gyroOdometry.pose },
+        ...this.extraEstimates(),
       ],
       lastScan: this.lastScan,
       feedback: this.lastFeedback,

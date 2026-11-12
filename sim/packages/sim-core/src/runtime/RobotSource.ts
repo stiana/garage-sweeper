@@ -1,4 +1,6 @@
-import type { LaserScan, Pose2D, RobotFeedback } from "@garage/sim-core";
+import type { Pose2D } from "../math/Pose2D";
+import type { LaserScan } from "../sensors/LaserScan";
+import type { RobotFeedback } from "../simulation/RobotIo";
 
 export interface PoseEstimate {
   id: string;

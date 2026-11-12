@@ -4,6 +4,7 @@ import {
   type RobotController,
   type RobotFeedback,
   type RobotGeometry,
+  type TwistSetpoint,
 } from "@garage/sim-core";
 
 const MAX_FORWARD_SPEED_IN_M_PER_S = 0.4;
@@ -13,7 +14,7 @@ const YAW_ACCELERATION_IN_RAD_PER_S2 = 3;
 
 /**
  * Drives the robot from the keyboard (WASD or arrow keys) with gentle ramps.
- * Stands in for the PLC until the ADS link exists.
+ * Drives the in-browser simulator directly, or sends twists to the robot server.
  */
 export class KeyboardController implements RobotController {
   private readonly pressed = new Set<string>();
@@ -55,16 +56,20 @@ export class KeyboardController implements RobotController {
     this.yawRate = 0;
   }
 
-  exchange(feedback: RobotFeedback): RobotCommand {
-    const deltaTimeInS = this.lastTimeInNs === null ? 0 : (feedback.timeInNs - this.lastTimeInNs) / 1e9;
-    this.lastTimeInNs = feedback.timeInNs;
-
+  /** Advances the ramps by one time step and returns the twist the keys ask for. */
+  twist(deltaTimeInS: number): TwistSetpoint {
     const forwardTarget = ((this.pressed.has("forward") ? 1 : 0) - (this.pressed.has("back") ? 1 : 0)) * MAX_FORWARD_SPEED_IN_M_PER_S;
     const yawTarget = ((this.pressed.has("left") ? 1 : 0) - (this.pressed.has("right") ? 1 : 0)) * MAX_YAW_RATE_IN_RAD_PER_S;
     this.forwardSpeed = approach(this.forwardSpeed, forwardTarget, ACCELERATION_IN_M_PER_S2 * deltaTimeInS);
     this.yawRate = approach(this.yawRate, yawTarget, YAW_ACCELERATION_IN_RAD_PER_S2 * deltaTimeInS);
+    return { forwardSpeedInMPerS: this.forwardSpeed, yawRateInRadPerS: this.yawRate };
+  }
 
-    const speeds = this.kinematics.toWheelSpeeds(this.forwardSpeed, this.yawRate);
+  exchange(feedback: RobotFeedback): RobotCommand {
+    const deltaTimeInS = this.lastTimeInNs === null ? 0 : (feedback.timeInNs - this.lastTimeInNs) / 1e9;
+    this.lastTimeInNs = feedback.timeInNs;
+    const { forwardSpeedInMPerS, yawRateInRadPerS } = this.twist(deltaTimeInS);
+    const speeds = this.kinematics.toWheelSpeeds(forwardSpeedInMPerS, yawRateInRadPerS);
     return {
       leftWheelSetpointInRadPerS: speeds.leftInRadPerS,
       rightWheelSetpointInRadPerS: speeds.rightInRadPerS,

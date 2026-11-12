@@ -11,6 +11,7 @@ export interface CanvasTheme {
   truth: string;
   wheels: string;
   gyro: string;
+  plc: string;
   scan: string;
   hit: string;
   annotation: string;
@@ -37,6 +38,7 @@ export function readCanvasTheme(): CanvasTheme {
     truth: token("--truth"),
     wheels: token("--wheels"),
     gyro: token("--gyro"),
+    plc: token("--plc"),
     scan: token("--scan"),
     hit: token("--hit"),
     annotation: token("--annotation"),

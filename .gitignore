@@ -8,3 +8,6 @@ _Libraries/
 *.~u
 *.suo
 .vs/
+*.bak
+*.tclrs
+*.compileinfo
