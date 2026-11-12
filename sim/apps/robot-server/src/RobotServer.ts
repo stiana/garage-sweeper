@@ -166,6 +166,7 @@ export class RobotServer {
     const { source, simulation, plc } = this.options;
     source.realign();
     void plc?.setPose(simulation.truePose);
+    plc?.startLinkLog();
     const route = new TestRoute();
     const estimateIds = source.view.estimates.map((e) => ({ id: e.id, label: e.label }));
     const header = ["timeInS", "trueX", "trueY", "trueThetaInRad"];
@@ -186,6 +187,7 @@ export class RobotServer {
 
   private cancelTestRoute(): void {
     this.testRoute = null;
+    this.options.plc?.takeLinkLog();
     this.drive(STOPPED);
     this.broadcast({ type: "testRoute", state: "cancelled" });
   }
@@ -247,9 +249,12 @@ export class RobotServer {
     const collisions = this.options.source.collisionCount - run.collisionsAtStart;
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
     const file = resolve("runs", `testlop-${this.noiseId}-${stamp}.csv`);
+    const linkLog = this.options.plc?.takeLinkLog();
     try {
       await mkdir(resolve("runs"), { recursive: true });
       await writeFile(file, run.rows.join("\n") + "\n");
+      // Every simulator step of the PLC link, for finding out how the wheels follow NC.
+      if (linkLog) await writeFile(file.replace(/\.csv$/, "-link.csv"), linkLog.join("\n") + "\n");
     } catch (error) {
       console.warn(`Kunne ikke lagre testløypa: ${(error as Error).message}`);
     }
