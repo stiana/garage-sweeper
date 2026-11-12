@@ -28,24 +28,17 @@ END_VAR]]></Declaration>
       <Declaration><![CDATA[METHOD Execute
 VAR
 	leftInM : LREAL;
-	rightinM : LREAL;
+	rightInM : LREAL;
 	motion : BodyMotion;
 	midHeadingInRad : LREAL;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// OPPGAVE M1 (Stian): Oppdater _pose fra hjulene, én gang per syklus.
-// 1. Les drive.LeftWheelPositionInM og drive.RightWheelPositionInM.
-// 2. Finn hvor langt hvert hjul har gått siden forrige syklus, og ta vare på verdiene til neste gang.
-// 3. Bruk kinematics.ToBodyMotion til å få strekning og kursendring.
-// 4. Flytt _pose: bruk kursen midt i steget (theta + endring / 2) for x og y, og normaliser theta til (-pi, pi].
-// I simulatoren skal den da følge den orange roboten nøyaktig.
+        <ST><![CDATA[leftInM := drive.LeftWheelPositionInM;
+rightInM := drive.RightWheelPositionInM;
 
-leftInM := drive.LeftWheelPositionInM;
-rightinM := drive.RightWheelPositionInM;
-
-motion := kinematics.ToBodyMotion(leftDeltaInM := leftInM - lastLeftInM, rightDeltaInM := rightinM - lastRightInM);
+motion := kinematics.ToBodyMotion(leftDeltaInM := leftInM - lastLeftInM, rightDeltaInM := rightInM - lastRightInM);
 lastLeftInM := leftInM;
-lastRightInM := rightinM;
+lastRightInM := rightInM;
 
 midHeadingInRad := _pose.thetaInRad + motion.headingChangeInRad / 2.0;
 _pose.x := _pose.x + motion.distanceInM * COS(midHeadingInRad);
