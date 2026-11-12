@@ -52,8 +52,9 @@ export class PlcBridge implements RobotController {
     this.client = new Client({
       targetAmsNetId: settings.targetAmsNetId,
       targetAdsPort: settings.targetAdsPort,
-      routerAddress: settings.routerAddress,
-      localAmsNetId: settings.localAmsNetId,
+      // ads-client treats a key set to undefined as set, so only pass what was given.
+      ...(settings.routerAddress ? { routerAddress: settings.routerAddress } : {}),
+      ...(settings.localAmsNetId ? { localAmsNetId: settings.localAmsNetId } : {}),
       autoReconnect: true,
       objectifyEnumerations: false,
     });
