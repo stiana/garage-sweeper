@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Converts readable .st sources in PLC/src into TwinCAT 3 object files.
+"""Converts readable .st sources in plc/src into TwinCAT 3 object files.
 
 TwinCAT keeps each POU in its own XML file (.TcPOU, .TcIO, .TcDUT, .TcGVL).
 Writing those by hand is noisy, so the framework is written as plain ST here
