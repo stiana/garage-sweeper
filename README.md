@@ -6,7 +6,7 @@ En garasjefeiende robot styrt av TwinCAT 3 (4026), uten ROS. Repoet har TwinCAT-
 
 ```bash
 cd sim
-npm install
+npm install       # trenger npm 10 eller nyere (følger med Node 22/24)
 npm test          # enhetstester for simulatorkjernen (Vitest)
 npm run build     # lager apps/robot-gui/dist/index.html
 ```
@@ -40,7 +40,9 @@ Kildene ligger som lesbar tekst i `PLC/src/**/*.st`. `PLC/tools/st2tc.py` gjør 
 python PLC/tools/st2tc.py
 ```
 
-I XAE: PLC-prosjektet heter `PLC` og ligger i `PLC/`, sammen med kildene. Velg *Add > Existing Item* for filene i `PLC/generated/`. Sett PLC-tasken til 10 ms.
+Skriptet fører også filene inn i `PLC/PLC.plcproj`, mellom `st2tc`-markørene, og erstatter XAE sin tomme `POUs/MAIN`. I XAE: høyreklikk PLC-prosjektet og velg *Unload Project* og så *Reload Project*, eller lukk og åpne solutionen. Da dukker mappen `generated` opp. PLC-tasken går på 10 ms.
+
+Rediger `.st`-filene i `PLC/src`, ikke de genererte filene i XAE, for de skrives over neste gang skriptet kjøres.
 
 ## Struktur
 

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "ads-client": "2.1.0",
-    "ws": "8.18.0"
+    "ws": "8.22.2"
   },
   "devDependencies": {
     "@types/node": "22.10.2",
