@@ -16,10 +16,10 @@ END_VAR]]></Declaration>
 VAR_INPUT
 	bInitRetains : BOOL;
 	bInCopyCode : BOOL;
-	simulatorLink : REFERENCE TO SimulatorLink;
+	simulator : REFERENCE TO SimulatorLink;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[link REF= simulatorLink;]]></ST>
+        <ST><![CDATA[link REF= simulator;]]></ST>
       </Implementation>
     </Method>
     <Method Name="StartBiasCalibration" Id="{a9e518d6-8ef0-5b9a-b66a-c86cdd4b5b62}">

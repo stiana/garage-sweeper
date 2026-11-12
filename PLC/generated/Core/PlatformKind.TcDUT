@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
-  <DUT Name="Platform" Id="{fb411fc4-ab63-55e9-b75c-3c8edacd6c24}">
+  <DUT Name="PlatformKind" Id="{118f33c3-84fd-59e8-947b-736266802811}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 {attribute 'strict'}
-TYPE Platform :
+TYPE PlatformKind :
 (
 	SIMULATION := 0,
 	HARDWARE

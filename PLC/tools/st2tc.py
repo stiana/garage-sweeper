@@ -22,6 +22,7 @@ GUIDs are derived from the object and member names, so regenerating gives
 the same ids.
 """
 import re
+import shutil
 import sys
 import uuid
 from pathlib import Path
@@ -232,6 +233,9 @@ def main() -> None:
     root = Path(__file__).resolve().parent.parent
     source_dir = root / "src"
     out_root = root / "generated"
+    # Start from scratch, so an object removed or renamed in src/ also leaves the project.
+    if out_root.exists():
+        shutil.rmtree(out_root)
     generated = [
         convert(path, out_root / path.parent.relative_to(source_dir))
         for path in sorted(source_dir.rglob("*.st"))

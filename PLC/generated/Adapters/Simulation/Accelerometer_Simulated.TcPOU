@@ -16,10 +16,10 @@ END_VAR]]></Declaration>
 VAR_INPUT
 	bInitRetains : BOOL;
 	bInCopyCode : BOOL;
-	simulatorLink : REFERENCE TO SimulatorLink;
+	simulator : REFERENCE TO SimulatorLink;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[link REF= simulatorLink;]]></ST>
+        <ST><![CDATA[link REF= simulator;]]></ST>
       </Implementation>
     </Method>
     <Property Name="AccelerationInMPerS2" Id="{3cdf711d-364c-50fc-95bd-905692904ae6}">

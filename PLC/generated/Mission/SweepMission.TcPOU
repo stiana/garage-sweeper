@@ -108,10 +108,12 @@ END_VAR]]></Declaration>
       </Implementation>
     </Method>
     <Method Name="Stopped" Id="{79198e0b-a880-5d10-9263-47f1f8f4786f}">
-      <Declaration><![CDATA[METHOD PRIVATE Stopped : Twist]]></Declaration>
+      <Declaration><![CDATA[METHOD PRIVATE Stopped : Twist
+VAR
+	standingStill : Twist;
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[Stopped.forwardSpeedInMPerS := 0;
-Stopped.yawRateInRadPerS := 0;]]></ST>
+        <ST><![CDATA[Stopped := standingStill;]]></ST>
       </Implementation>
     </Method>
     <Property Name="State" Id="{dbdbf95e-8f4b-5a68-9ddb-a6be58b8826a}">

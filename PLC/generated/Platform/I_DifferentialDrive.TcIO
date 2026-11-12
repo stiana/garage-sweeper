@@ -11,7 +11,7 @@
     <Method Name="SetTwist" Id="{117cb1ef-893c-5181-bcd7-b8426eef764c}">
       <Declaration><![CDATA[METHOD SetTwist
 VAR_INPUT
-	twist : Twist;
+	desiredTwist : Twist;
 END_VAR]]></Declaration>
     </Method>
     <Property Name="LeftWheelPositionInRad" Id="{2615bd70-b9cd-5bd3-85aa-b453e5643152}">

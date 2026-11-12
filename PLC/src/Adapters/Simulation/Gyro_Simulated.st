@@ -9,10 +9,10 @@ METHOD FB_init : BOOL
 VAR_INPUT
 	bInitRetains : BOOL;
 	bInCopyCode : BOOL;
-	simulatorLink : REFERENCE TO SimulatorLink;
+	simulator : REFERENCE TO SimulatorLink;
 END_VAR
 // @impl
-link REF= simulatorLink;
+link REF= simulator;
 END_METHOD
 METHOD StartBiasCalibration
 // @impl

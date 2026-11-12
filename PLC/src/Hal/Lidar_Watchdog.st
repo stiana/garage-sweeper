@@ -3,6 +3,7 @@
 {attribute 'enable_dynamic_creation'}
 FUNCTION_BLOCK Lidar_Watchdog IMPLEMENTS I_Lidar
 VAR
+	timeoutError : HardwareError := (isActive := TRUE, id := Constants.LIDAR_TIMEOUT_ERROR_ID, text := 'Ingen LIDAR-skann innenfor fristen');
 	inner : I_Lidar;
 	timeoutTimer : TON;
 	isTimedOut : BOOL;
@@ -60,9 +61,7 @@ END_PROPERTY
 PROPERTY Error : HardwareError
 GET
 IF isTimedOut THEN
-	Error.isActive := TRUE;
-	Error.id := Constants.LIDAR_TIMEOUT_ERROR_ID;
-	Error.text := 'Ingen LIDAR-skann innenfor fristen';
+	Error := timeoutError;
 ELSIF inner <> 0 THEN
 	Error := inner.Error;
 END_IF

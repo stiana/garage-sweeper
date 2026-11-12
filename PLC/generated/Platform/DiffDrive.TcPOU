@@ -47,7 +47,7 @@ rightAxis.Disable();]]></ST>
     <Method Name="SetTwist" Id="{098b0635-eb47-5c17-a9bd-67e37e18d5a2}">
       <Declaration><![CDATA[METHOD SetTwist
 VAR_INPUT
-	twist : Twist;
+	desiredTwist : Twist;
 END_VAR
 VAR
 	speeds : WheelSpeeds;
@@ -56,7 +56,7 @@ END_VAR]]></Declaration>
         <ST><![CDATA[IF leftAxis = 0 OR rightAxis = 0 THEN
 	RETURN;
 END_IF
-speeds := kinematics.ToWheelSpeeds(twist);
+speeds := kinematics.ToWheelSpeeds(desiredTwist);
 leftAxis.SetVelocity(speeds.leftInRadPerS);
 rightAxis.SetVelocity(speeds.rightInRadPerS);]]></ST>
       </Implementation>
