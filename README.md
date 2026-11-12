@@ -34,13 +34,13 @@ node apps/robot-server/dist/server.js --plc     # mot lokal TwinCAT, port 851
 
 ## PLC
 
-Kildene ligger som lesbar tekst i `plc/src/**/*.st`. `plc/tools/st2tc.py` gjør dem om til TwinCAT-filer i `plc/generated/`:
+Kildene ligger som lesbar tekst i `PLC/src/**/*.st`. `PLC/tools/st2tc.py` gjør dem om til TwinCAT-filer i `PLC/generated/`:
 
 ```bash
-python plc/tools/st2tc.py
+python PLC/tools/st2tc.py
 ```
 
-I XAE: legg til et PLC-prosjekt kalt `RobotPlc` i solutionen, og velg *Add > Existing Item* for filene i `plc/generated/`. Sett PLC-tasken til 10 ms.
+I XAE: PLC-prosjektet heter `PLC` og ligger i `PLC/`, sammen med kildene. Velg *Add > Existing Item* for filene i `PLC/generated/`. Sett PLC-tasken til 10 ms.
 
 ## Struktur
 
@@ -51,7 +51,7 @@ config/                     delt mellom PLC og simulator
   noise/                    støyprofiler (startverdier, ikke målt)
   lidars/                   LIDAR-profiler (anslag, juster etter datablad)
 garage-sweeper.sln          TwinCAT-solution
-plc/src/                    PLC-kilder (.st), plc/generated/ er laget av plc/tools/st2tc.py
+PLC/src/                    PLC-kilder (.st), PLC/generated/ er laget av PLC/tools/st2tc.py
 sim/
   packages/sim-core/        verden, robotfysikk, sensorer, støy. Ingen DOM eller nettverk.
   packages/gui-protocol/    meldinger mellom GUI og server
