@@ -14,7 +14,8 @@ TYPE HmiCommandCode :
 	STOP,
 	GO_TO_DOCK,
 	EMERGENCY_STOP,
-	RESET
+	RESET,
+	SET_POSE
 ) INT;
 END_TYPE]]></Declaration>
   </DUT>

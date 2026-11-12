@@ -18,7 +18,7 @@ export interface TwistJson {
 /** Same order as HmiCommandCode in the PLC. */
 export const HMI_COMMAND_CODES = [
   "NONE", "MANUAL_DRIVE", "START_MAPPING", "START_SWEEPING", "PAUSE",
-  "RESUME", "STOP", "GO_TO_DOCK", "EMERGENCY_STOP", "RESET",
+  "RESUME", "STOP", "GO_TO_DOCK", "EMERGENCY_STOP", "RESET", "SET_POSE",
 ] as const;
 export type HmiCommandCode = (typeof HMI_COMMAND_CODES)[number];
 

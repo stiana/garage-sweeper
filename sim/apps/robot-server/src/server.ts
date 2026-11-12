@@ -65,7 +65,11 @@ const controller = plc ?? new TwistController(geometry, () =>
   performance.now() - manualTwistAtInMs < DRIVE_TIMEOUT_IN_MS ? manualTwist : STOPPED,
 );
 const source = new SimulationSource(simulation, controller);
-if (plc) source.extraEstimates = () => plc.estimates;
+if (plc) {
+  source.extraEstimates = () => plc.estimates;
+  // The PLC starts its estimate at (0, 0, 0). Put it where the robot really starts.
+  plc.onConnected = () => void plc.setPose(simulation.truePose);
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 new RobotServer({

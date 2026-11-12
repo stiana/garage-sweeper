@@ -8,7 +8,7 @@ import {
   type RobotFeedback,
   STOPPED_COMMAND,
 } from "@garage/sim-core";
-import { HMI_COMMAND_CODES, type HmiCommandCode, type HmiStatusJson, MISSION_STATES, type TwistJson } from "@garage/gui-protocol";
+import { HMI_COMMAND_CODES, type HmiCommandCode, type HmiStatusJson, MISSION_STATES, type PoseJson, type TwistJson } from "@garage/gui-protocol";
 
 export interface PlcConnectionSettings {
   /** AmsNetId of the TwinCAT runtime. "localhost" when it runs on this PC. */
@@ -24,6 +24,8 @@ const MAX_SCAN_POINTS = 1024;
 const READ_INTERVAL_IN_MS = 5;
 const STATUS_INTERVAL_IN_MS = 100;
 const RECONNECT_DELAY_IN_MS = 2000;
+const STANDING_STILL: TwistJson = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
+const ORIGIN: PoseJson = { x: 0, y: 0, thetaInRad: 0 };
 
 /**
  * The simulator's side of the ADS link. The PLC is a passive party: it owns
@@ -41,6 +43,8 @@ export class PlcBridge implements RobotController {
   private lastStatusReadInMs = 0;
   private running = false;
   isConnected = false;
+  /** Called each time the link to the PLC is up, after a start or a reconnect. */
+  onConnected = () => {};
   status: HmiStatusJson | null = null;
   lastError = "";
 
@@ -68,6 +72,7 @@ export class PlcBridge implements RobotController {
         await this.initializeHmiSequence();
         this.isConnected = true;
         this.lastError = "";
+        this.onConnected();
         await this.readLoop();
       } catch (error) {
         this.isConnected = false;
@@ -95,14 +100,20 @@ export class PlcBridge implements RobotController {
     return this.estimatedPose ? [{ id: "plc", label: "PLC-estimat", pose: this.estimatedPose }] : [];
   }
 
-  async sendHmi(code: HmiCommandCode, twist: TwistJson = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 }): Promise<void> {
+  async sendHmi(code: HmiCommandCode, twist: TwistJson = STANDING_STILL, pose: PoseJson = ORIGIN): Promise<void> {
     if (!this.isConnected) return;
     this.hmiSequence = (this.hmiSequence + 1) >>> 0;
     await this.client.writeValue("RobotHmi.command", {
       sequence: this.hmiSequence,
       code: HMI_COMMAND_CODES.indexOf(code),
       manualTwist: twist,
+      pose,
     });
+  }
+
+  /** Tells the PLC where the robot is, as an operator would. The PLC restarts its estimate there. */
+  async setPose(pose: Pose2D): Promise<void> {
+    await this.sendHmi("SET_POSE", STANDING_STILL, { x: pose.x, y: pose.y, thetaInRad: pose.thetaInRad });
   }
 
   /** Updates only the manual twist, so holding a key does not resend the command. */
