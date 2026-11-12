@@ -4,8 +4,8 @@
 FUNCTION_BLOCK RobotComposition
 VAR
 	simulator : SimulatorLink;
-	leftSimulatedAxis : DriveAxis_Simulated(simulator := simulator, mountedSide := WheelSide.LEFT);
-	rightSimulatedAxis : DriveAxis_Simulated(simulator := simulator, mountedSide := WheelSide.RIGHT);
+	leftAxis : DriveAxis_Nc(ncAxis := Axes.leftWheel);
+	rightAxis : DriveAxis_Nc(ncAxis := Axes.rightWheel);
 	simulatedGyro : Gyro_Simulated(simulator := simulator);
 	simulatedAccelerometer : Accelerometer_Simulated(simulator := simulator);
 	simulatedLidar : Lidar_Simulated(simulator := simulator);
@@ -47,6 +47,11 @@ IF mission.ShouldDrive THEN
 ELSE
 	drive.Disable();
 END_IF
+drive.Execute();
+
+IF Parameters.platform = PlatformKind.SIMULATION THEN
+	SendWheelsToSimulator();
+END_IF
 
 PublishStatus();
 END_METHOD
@@ -57,21 +62,31 @@ END_VAR
 // @impl
 CASE Parameters.platform OF
 	PlatformKind.SIMULATION:
-		drive.Connect(leftSimulatedAxis, rightSimulatedAxis);
 		gyro := simulatedGyro;
 		accelerometer := simulatedAccelerometer;
 		lidar.Wrap(simulatedLidar);
 		lidarPower := simulatedLidarPower;
 	PlatformKind.HARDWARE:
-		// Kommer i M7: DriveAxis_Nc, Gyro_EP3751 og valgt LIDAR-adapter.
+		// Kommer i M7: Gyro_EP3751 og valgt LIDAR-adapter. Hjulene bruker de samme NC-aksene.
 		RETURN;
 END_CASE
+
+drive.Connect(leftAxis, rightAxis);
 
 lidarPower.SwitchOn();
 lidar.Start();
 odometry.Connect(drive);
 odometry.Reset(start);
 isInitialized := TRUE;
+END_METHOD
+METHOD PRIVATE SendWheelsToSimulator
+// @impl
+// I simuleringen er NC-aksene motor og enkoder. Simulatoren får vite hvor fort hjulene faktisk går,
+// og flytter roboten etter det, med sluring og kollisjoner.
+SimulatorIo.command.leftWheelVelocityInMPerS := leftAxis.VelocityInMPerS;
+SimulatorIo.command.rightWheelVelocityInMPerS := rightAxis.VelocityInMPerS;
+SimulatorIo.command.isLeftDriveEnabled := leftAxis.IsReady;
+SimulatorIo.command.isRightDriveEnabled := rightAxis.IsReady;
 END_METHOD
 METHOD PRIVATE PublishStatus
 VAR

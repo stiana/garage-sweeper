@@ -44,6 +44,18 @@ Skriptet fører også filene inn i `PLC/PLC.plcproj`, mellom `st2tc`-markørene,
 
 Rediger `.st`-filene i `PLC/src`, ikke de genererte filene i XAE, for de skrives over neste gang skriptet kjøres.
 
+### NC-akser for hjulene
+
+Hjulene kjøres som NC-akser, både i simulering og på ekte maskinvare. Det er bare NC-konfigurasjonen som skiller dem.
+
+1. Lag to akser under *Motion > NC-Task > Axes*: `LeftWheel` og `RightWheel`. Bruk akstypen *Simulation* inntil motorene er på plass.
+2. Velg enheten **m** og skaler aksene slik at posisjonen er meter langs hjulbanen, altså `2 * pi * hjulradius` per motoromdreining (pluss eventuell girutveksling). Hjulradien finnes da bare i NC.
+3. Sett maks fart til omtrent 0,6 m/s. Akselerasjonen kan være 1–2 m/s².
+4. Koble aksene til PLC-en (*Settings > Link To PLC*): `Axes.leftWheel` og `Axes.rightWheel`.
+5. Positiv retning skal være fremover på begge hjulene. På ekte maskinvare snur du derfor retningen på den ene aksen i NC, siden motorene sitter speilvendt.
+
+Sporvidden, altså avstanden mellom hjulene, ligger i `Parameters.trackWidthInM` (PERSISTENT). Simulatoren har sin egen «sanne» geometri i `config/robot.json`. At den kan avvike fra det PLC-en tror, er med vilje, for det er nettopp det kalibrering handler om.
+
 ## Struktur
 
 ```text

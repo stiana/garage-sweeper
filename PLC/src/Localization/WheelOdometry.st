@@ -20,13 +20,13 @@ VAR_INPUT
 END_VAR
 // @impl
 _pose := pose;
-// OPPGAVE M1 (Stian): Husk også hjulvinklene akkurat nå, så første Execute ikke tror roboten har hoppet.
+// OPPGAVE M1 (Stian): Husk også hjulposisjonene akkurat nå, så første Execute ikke tror roboten har hoppet.
 END_METHOD
 METHOD Execute
 // @impl
 // OPPGAVE M1 (Stian): Oppdater _pose fra hjulene, én gang per syklus.
-// 1. Les drive.LeftWheelPositionInRad og drive.RightWheelPositionInRad.
-// 2. Finn hvor mye hvert hjul har rotert siden forrige syklus, og ta vare på verdiene til neste gang.
+// 1. Les drive.LeftWheelPositionInM og drive.RightWheelPositionInM.
+// 2. Finn hvor langt hvert hjul har gått siden forrige syklus, og ta vare på verdiene til neste gang.
 // 3. Bruk kinematics.ToBodyMotion til å få strekning og kursendring.
 // 4. Flytt _pose: bruk kursen midt i steget (theta + endring / 2) for x og y, og normaliser theta til (-pi, pi].
 // I simulatoren skal den da følge den orange roboten nøyaktig.

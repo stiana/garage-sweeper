@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <GVL Name="Axes" Id="{cdae12d7-a684-5939-8187-9788da6b22fd}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	// Link each one to its NC axis in XAE: the axis, Settings, Link To PLC.
+	leftWheel : AXIS_REF;
+	rightWheel : AXIS_REF;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

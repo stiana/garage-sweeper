@@ -24,6 +24,16 @@ END_VAR]]></Declaration>
 rightAxis := right;]]></ST>
       </Implementation>
     </Method>
+    <Method Name="Execute" Id="{faac4bfe-0ce8-591b-9cf4-3ce387f54fd0}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF leftAxis = 0 OR rightAxis = 0 THEN
+	RETURN;
+END_IF
+leftAxis.Execute();
+rightAxis.Execute();]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="Enable" Id="{baa38bb0-278d-5e8a-871b-b137239c7090}">
       <Declaration><![CDATA[METHOD Enable]]></Declaration>
       <Implementation>
@@ -57,30 +67,30 @@ END_VAR]]></Declaration>
 	RETURN;
 END_IF
 speeds := kinematics.ToWheelSpeeds(desiredTwist);
-leftAxis.SetVelocity(speeds.leftInRadPerS);
-rightAxis.SetVelocity(speeds.rightInRadPerS);]]></ST>
+leftAxis.SetVelocity(speeds.leftInMPerS);
+rightAxis.SetVelocity(speeds.rightInMPerS);]]></ST>
       </Implementation>
     </Method>
-    <Property Name="LeftWheelPositionInRad" Id="{109afdba-85bc-55d5-9e0a-e2a00af29e49}">
-      <Declaration><![CDATA[PROPERTY LeftWheelPositionInRad : LREAL]]></Declaration>
-      <Get Name="Get" Id="{b274fc98-9da7-540a-beca-1aa4d32c89aa}">
+    <Property Name="LeftWheelPositionInM" Id="{bb529295-4fcf-568d-9617-282c57c2850a}">
+      <Declaration><![CDATA[PROPERTY LeftWheelPositionInM : LREAL]]></Declaration>
+      <Get Name="Get" Id="{2965df9d-c0ea-5ec0-abec-70f400e386ad}">
         <Declaration><![CDATA[VAR
 END_VAR]]></Declaration>
         <Implementation>
           <ST><![CDATA[IF leftAxis <> 0 THEN
-	LeftWheelPositionInRad := leftAxis.PositionInRad;
+	LeftWheelPositionInM := leftAxis.PositionInM;
 END_IF]]></ST>
         </Implementation>
       </Get>
     </Property>
-    <Property Name="RightWheelPositionInRad" Id="{dff3e45e-593f-5a6a-bab9-8340da331952}">
-      <Declaration><![CDATA[PROPERTY RightWheelPositionInRad : LREAL]]></Declaration>
-      <Get Name="Get" Id="{648b6731-c9af-5050-9322-9bc196995e65}">
+    <Property Name="RightWheelPositionInM" Id="{e5a0aef1-afa7-5090-b787-bb6d4bf4debe}">
+      <Declaration><![CDATA[PROPERTY RightWheelPositionInM : LREAL]]></Declaration>
+      <Get Name="Get" Id="{063c88d4-001f-54bc-8702-a0373d496641}">
         <Declaration><![CDATA[VAR
 END_VAR]]></Declaration>
         <Implementation>
           <ST><![CDATA[IF rightAxis <> 0 THEN
-	RightWheelPositionInRad := rightAxis.PositionInRad;
+	RightWheelPositionInM := rightAxis.PositionInM;
 END_IF]]></ST>
         </Implementation>
       </Get>

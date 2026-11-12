@@ -16,6 +16,14 @@ END_VAR
 leftAxis := left;
 rightAxis := right;
 END_METHOD
+METHOD Execute
+// @impl
+IF leftAxis = 0 OR rightAxis = 0 THEN
+	RETURN;
+END_IF
+leftAxis.Execute();
+rightAxis.Execute();
+END_METHOD
 METHOD Enable
 // @impl
 IF leftAxis = 0 OR rightAxis = 0 THEN
@@ -44,20 +52,20 @@ IF leftAxis = 0 OR rightAxis = 0 THEN
 	RETURN;
 END_IF
 speeds := kinematics.ToWheelSpeeds(desiredTwist);
-leftAxis.SetVelocity(speeds.leftInRadPerS);
-rightAxis.SetVelocity(speeds.rightInRadPerS);
+leftAxis.SetVelocity(speeds.leftInMPerS);
+rightAxis.SetVelocity(speeds.rightInMPerS);
 END_METHOD
-PROPERTY LeftWheelPositionInRad : LREAL
+PROPERTY LeftWheelPositionInM : LREAL
 GET
 IF leftAxis <> 0 THEN
-	LeftWheelPositionInRad := leftAxis.PositionInRad;
+	LeftWheelPositionInM := leftAxis.PositionInM;
 END_IF
 END_GET
 END_PROPERTY
-PROPERTY RightWheelPositionInRad : LREAL
+PROPERTY RightWheelPositionInM : LREAL
 GET
 IF rightAxis <> 0 THEN
-	RightWheelPositionInRad := rightAxis.PositionInRad;
+	RightWheelPositionInM := rightAxis.PositionInM;
 END_IF
 END_GET
 END_PROPERTY

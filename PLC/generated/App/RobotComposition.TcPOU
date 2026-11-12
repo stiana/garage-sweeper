@@ -7,8 +7,8 @@
 FUNCTION_BLOCK RobotComposition
 VAR
 	simulator : SimulatorLink;
-	leftSimulatedAxis : DriveAxis_Simulated(simulator := simulator, mountedSide := WheelSide.LEFT);
-	rightSimulatedAxis : DriveAxis_Simulated(simulator := simulator, mountedSide := WheelSide.RIGHT);
+	leftAxis : DriveAxis_Nc(ncAxis := Axes.leftWheel);
+	rightAxis : DriveAxis_Nc(ncAxis := Axes.rightWheel);
 	simulatedGyro : Gyro_Simulated(simulator := simulator);
 	simulatedAccelerometer : Accelerometer_Simulated(simulator := simulator);
 	simulatedLidar : Lidar_Simulated(simulator := simulator);
@@ -54,6 +54,11 @@ IF mission.ShouldDrive THEN
 ELSE
 	drive.Disable();
 END_IF
+drive.Execute();
+
+IF Parameters.platform = PlatformKind.SIMULATION THEN
+	SendWheelsToSimulator();
+END_IF
 
 PublishStatus();]]></ST>
       </Implementation>
@@ -66,21 +71,33 @@ END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[CASE Parameters.platform OF
 	PlatformKind.SIMULATION:
-		drive.Connect(leftSimulatedAxis, rightSimulatedAxis);
 		gyro := simulatedGyro;
 		accelerometer := simulatedAccelerometer;
 		lidar.Wrap(simulatedLidar);
 		lidarPower := simulatedLidarPower;
 	PlatformKind.HARDWARE:
-		// Kommer i M7: DriveAxis_Nc, Gyro_EP3751 og valgt LIDAR-adapter.
+		// Kommer i M7: Gyro_EP3751 og valgt LIDAR-adapter. Hjulene bruker de samme NC-aksene.
 		RETURN;
 END_CASE
+
+drive.Connect(leftAxis, rightAxis);
 
 lidarPower.SwitchOn();
 lidar.Start();
 odometry.Connect(drive);
 odometry.Reset(start);
 isInitialized := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SendWheelsToSimulator" Id="{8f10f9af-3837-5fb5-8260-2457f9c12315}">
+      <Declaration><![CDATA[METHOD PRIVATE SendWheelsToSimulator]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// I simuleringen er NC-aksene motor og enkoder. Simulatoren får vite hvor fort hjulene faktisk går,
+// og flytter roboten etter det, med sluring og kollisjoner.
+SimulatorIo.command.leftWheelVelocityInMPerS := leftAxis.VelocityInMPerS;
+SimulatorIo.command.rightWheelVelocityInMPerS := rightAxis.VelocityInMPerS;
+SimulatorIo.command.isLeftDriveEnabled := leftAxis.IsReady;
+SimulatorIo.command.isRightDriveEnabled := rightAxis.IsReady;]]></ST>
       </Implementation>
     </Method>
     <Method Name="PublishStatus" Id="{7cd620cb-62be-5d54-820f-dc5c4cebc267}">
