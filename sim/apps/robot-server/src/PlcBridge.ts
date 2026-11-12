@@ -6,6 +6,7 @@ import {
   type RobotCommand,
   type RobotController,
   type RobotFeedback,
+  STEP_IN_S,
   STOPPED_COMMAND,
 } from "@garage/sim-core";
 import { GyroAverager } from "./GyroAverager";
@@ -24,6 +25,8 @@ export interface PlcConnectionSettings {
 const PROTOCOL_VERSION = 4;
 const MAX_SCAN_POINTS = 1024;
 const READ_INTERVAL_IN_MS = 5;
+/** Two commands further apart than this are not one motion to measure acceleration from. */
+const MAX_ACCELERATION_DT_IN_S = 0.1;
 const STATUS_INTERVAL_IN_MS = 100;
 const RECONNECT_DELAY_IN_MS = 2000;
 const STANDING_STILL: TwistJson = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
@@ -40,6 +43,8 @@ export class PlcBridge implements RobotController {
   private lastFeedbackTimeInNs: number | null = null;
   /** Simulation time when the latest command arrived, to know how old its axis positions are. */
   private commandTimeInNs = 0;
+  private leftWheelAccelerationInMPerS2 = 0;
+  private rightWheelAccelerationInMPerS2 = 0;
   private readonly leftWheel: WheelFollower;
   private readonly rightWheel: WheelFollower;
   private readonly gyro = new GyroAverager();
@@ -58,8 +63,8 @@ export class PlcBridge implements RobotController {
 
   /** wheelRadiusInM: the true wheel radius of the simulated robot, from config/robot.json. */
   constructor(settings: PlcConnectionSettings, wheelRadiusInM: number) {
-    this.leftWheel = new WheelFollower(wheelRadiusInM);
-    this.rightWheel = new WheelFollower(wheelRadiusInM);
+    this.leftWheel = new WheelFollower(wheelRadiusInM, STEP_IN_S);
+    this.rightWheel = new WheelFollower(wheelRadiusInM, STEP_IN_S);
     this.client = new Client({
       targetAmsNetId: settings.targetAmsNetId,
       targetAdsPort: settings.targetAdsPort,
@@ -116,8 +121,20 @@ export class PlcBridge implements RobotController {
     // The NC axes are the motors and encoders. The simulated wheels follow them,
     // then the simulator adds what NC cannot know: slip and collisions.
     return {
-      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(command.leftWheelPositionInM, command.leftWheelVelocityInMPerS, ageInS, feedback.leftWheelAngleInRad),
-      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(command.rightWheelPositionInM, command.rightWheelVelocityInMPerS, ageInS, feedback.rightWheelAngleInRad),
+      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(
+        command.leftWheelPositionInM,
+        command.leftWheelVelocityInMPerS,
+        this.leftWheelAccelerationInMPerS2,
+        ageInS,
+        feedback.leftWheelAngleInRad,
+      ),
+      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(
+        command.rightWheelPositionInM,
+        command.rightWheelVelocityInMPerS,
+        this.rightWheelAccelerationInMPerS2,
+        ageInS,
+        feedback.rightWheelAngleInRad,
+      ),
       isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
       isLidarPowered: command.isLidarPowered,
     };
@@ -161,8 +178,7 @@ export class PlcBridge implements RobotController {
       if (command.version !== PROTOCOL_VERSION) {
         throw new Error(`SimulatorIo-versjon ${command.version} i PLC-en, serveren forventer ${PROTOCOL_VERSION}`);
       }
-      this.latestCommand = command;
-      this.commandTimeInNs = this.lastFeedbackTimeInNs ?? 0;
+      this.takeCommand(command);
       const pose = command.estimatedPose;
       this.estimatedPose = new Pose2D(pose.x, pose.y, pose.thetaInRad);
 
@@ -173,6 +189,26 @@ export class PlcBridge implements RobotController {
         this.status = { ...status, missionState: MISSION_STATES[status.missionState] ?? "IDLE" };
       }
       await sleep(READ_INTERVAL_IN_MS);
+    }
+  }
+
+  /**
+   * The read loop is faster than the PLC task, so the same command often comes twice.
+   * Only a new PLC cycle restarts its age, and the wheel accelerations are measured
+   * between two cycles on the PLC's own clock.
+   */
+  private takeCommand(command: PlcCommand): void {
+    const previous = this.latestCommand;
+    this.latestCommand = command;
+    if (previous && command.plcTimeInNs === previous.plcTimeInNs) return;
+    this.commandTimeInNs = this.lastFeedbackTimeInNs ?? 0;
+    const dtInS = previous ? Number(BigInt(command.plcTimeInNs) - BigInt(previous.plcTimeInNs)) / 1e9 : 0;
+    if (dtInS > 0 && dtInS < MAX_ACCELERATION_DT_IN_S) {
+      this.leftWheelAccelerationInMPerS2 = (command.leftWheelVelocityInMPerS - previous!.leftWheelVelocityInMPerS) / dtInS;
+      this.rightWheelAccelerationInMPerS2 = (command.rightWheelVelocityInMPerS - previous!.rightWheelVelocityInMPerS) / dtInS;
+    } else {
+      this.leftWheelAccelerationInMPerS2 = 0;
+      this.rightWheelAccelerationInMPerS2 = 0;
     }
   }
 
@@ -199,6 +235,7 @@ export class PlcBridge implements RobotController {
 
 interface PlcCommand {
   version: number;
+  plcTimeInNs: bigint | number;
   leftWheelVelocityInMPerS: number;
   rightWheelVelocityInMPerS: number;
   leftWheelPositionInM: number;
