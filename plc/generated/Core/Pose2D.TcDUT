@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <DUT Name="Pose2D" Id="{5c3cd9c3-828f-5f88-b8a0-d533d430a706}">
+    <Declaration><![CDATA[TYPE Pose2D :
+STRUCT
+	x : LREAL;
+	y : LREAL;
+	thetaInRad : LREAL;
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

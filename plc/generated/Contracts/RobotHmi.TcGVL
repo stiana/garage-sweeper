@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <GVL Name="RobotHmi" Id="{b5fc5b2e-5306-5327-be70-30e2b1f2d258}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	command : HmiCommand;
+	status : HmiStatus;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

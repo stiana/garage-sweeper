@@ -1,0 +1,7 @@
+INTERFACE I_PoseSource
+METHOD Reset
+VAR_INPUT
+	pose : Pose2D;
+END_VAR
+PROPERTY Pose : Pose2D
+GET

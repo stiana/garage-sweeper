@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="SimulatorLink" Id="{a462f8c5-672d-5d13-8abd-5a10e743d669}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK SimulatorLink
+VAR
+	cycle : UDINT;
+	lastSequence : UDINT;
+	silentCycles : UDINT;
+	_isConnected : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Execute" Id="{6720d030-624d-54b3-ab2f-48c7aca86e3c}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[cycle := cycle + 1;
+SimulatorIo.command.version := Constants.SIMULATOR_PROTOCOL_VERSION;
+SimulatorIo.command.cycle := cycle;
+SimulatorIo.command.plcTimeInNs := F_GetSystemTime() * 100;
+
+IF SimulatorIo.feedback.sequence <> lastSequence THEN
+	lastSequence := SimulatorIo.feedback.sequence;
+	silentCycles := 0;
+ELSIF silentCycles < Constants.SIMULATOR_TIMEOUT_IN_CYCLES THEN
+	silentCycles := silentCycles + 1;
+END_IF
+
+_isConnected := SimulatorIo.feedback.version = Constants.SIMULATOR_PROTOCOL_VERSION
+	AND silentCycles < Constants.SIMULATOR_TIMEOUT_IN_CYCLES;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="IsConnected" Id="{14dc0167-7af7-5b4f-bb02-e46a92a05599}">
+      <Declaration><![CDATA[PROPERTY IsConnected : BOOL]]></Declaration>
+      <Get Name="Get" Id="{afc8f24c-0732-53bc-a83c-5208f1ad3ce1}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsConnected := _isConnected;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

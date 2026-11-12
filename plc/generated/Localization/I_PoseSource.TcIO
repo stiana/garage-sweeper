@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <Itf Name="I_PoseSource" Id="{fb70a82b-2831-5665-93f3-2881a854f361}">
+    <Declaration><![CDATA[INTERFACE I_PoseSource]]></Declaration>
+    <Method Name="Reset" Id="{68376bf4-0338-5126-87bc-d465cce5f941}">
+      <Declaration><![CDATA[METHOD Reset
+VAR_INPUT
+	pose : Pose2D;
+END_VAR]]></Declaration>
+    </Method>
+    <Property Name="Pose" Id="{88aa799a-c339-5238-aa7c-67fef27207b4}">
+      <Declaration><![CDATA[PROPERTY Pose : Pose2D]]></Declaration>
+      <Get Name="Get" Id="{f2b66024-e9ae-5d09-ba32-37c6a461ad2d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>
