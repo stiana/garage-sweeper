@@ -54,7 +54,7 @@ IF gyro.IsValid AND gyro.TimestampInNs <> lastGyroTimestampInNs THEN
 	IF gyro.TimestampInNs > lastGyroTimestampInNs THEN
 		dtInS := ULINT_TO_LREAL(gyro.TimestampInNs - lastGyroTimestampInNs) * 1E-9;
 	END_IF
-	IF dtInS > 0 AND dtInS < 0.1 THEN
+	IF dtInS > 0 AND dtInS < 0.5 THEN
 		headingChangeInRad := (gyro.YawRateInRadPerS - gyroBiasInRadPerS) * dtInS;
 	END_IF
 	
