@@ -14,6 +14,7 @@ import type {
   PoseJson,
   ServerMessage,
   StateMessage,
+  TestRouteMessage,
   TwistJson,
 } from "@garage/gui-protocol";
 import type { KeyboardController } from "../input/KeyboardController";
@@ -35,11 +36,13 @@ export class RemoteBackend implements Backend {
   readonly hitMap = new HitMap();
   readonly history: ErrorSample[] = [];
   readonly canPause = false;
+  readonly canRunTestRoute = true;
   isPaused = false;
   speedFactor = 1;
   plc: PlcView | null = null;
   onWorldReplaced = () => {};
   onConnectionChanged = (_message: string) => {};
+  onTestRoute = (_message: TestRouteMessage) => {};
 
   private socket: WebSocket | null = null;
   private state: StateMessage | null = null;
@@ -124,6 +127,7 @@ export class RemoteBackend implements Backend {
   setCondition(condition: BodyCondition): void { this.send({ type: "condition", condition }); }
   kidnap(pose: Pose2D): void { this.send({ type: "kidnap", pose: { x: pose.x, y: pose.y, thetaInRad: pose.thetaInRad } }); }
   sendHmi(code: HmiCommandCode): void { this.send({ type: "hmi", code }); }
+  toggleTestRoute(): void { this.send({ type: "testRoute" }); }
 
   private connect(): void {
     const socket = new WebSocket(this.url);
@@ -149,6 +153,9 @@ export class RemoteBackend implements Backend {
         break;
       case "state":
         this.receiveState(message);
+        break;
+      case "testRoute":
+        this.onTestRoute(message);
         break;
     }
   }

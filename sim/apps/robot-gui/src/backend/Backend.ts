@@ -1,5 +1,5 @@
 import type { BodyCondition, ErrorSample, HitMap, Pose2D, RobotView, World, WorldDefinition } from "@garage/sim-core";
-import type { HmiCommandCode, HmiStatusJson } from "@garage/gui-protocol";
+import type { HmiCommandCode, HmiStatusJson, TestRouteMessage } from "@garage/gui-protocol";
 
 /** Sensor values for the readouts, the same whether the robot runs here or on the server. */
 export interface Telemetry {
@@ -34,6 +34,8 @@ export interface Backend {
   readonly telemetry: Telemetry;
   readonly plc: PlcView | null;
   readonly canPause: boolean;
+  /** Only the robot server can drive the test route. */
+  readonly canRunTestRoute: boolean;
   isPaused: boolean;
   speedFactor: number;
 
@@ -48,9 +50,13 @@ export interface Backend {
   setCondition(condition: BodyCondition): void;
   kidnap(pose: Pose2D): void;
   sendHmi(code: HmiCommandCode): void;
+  /** Starts the test route, or stops it if it is running. */
+  toggleTestRoute(): void;
 
   /** Called when someone else changed the world, so the GUI can refit and drop its selection. */
   onWorldReplaced: () => void;
   /** Called when the connection state changes, for the status line. */
   onConnectionChanged: (message: string) => void;
+  /** Called when the test route starts, stops or finishes. */
+  onTestRoute: (message: TestRouteMessage) => void;
 }
