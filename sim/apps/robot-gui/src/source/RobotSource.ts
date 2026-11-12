@@ -11,7 +11,8 @@ export interface RobotView {
   /** Known only in the simulator. */
   truePose: Pose2D | null;
   estimates: PoseEstimate[];
-  lastScan: { scan: LaserScan; pose: Pose2D } | null;
+  /** The last full scan, with where the robot really was and where it believed it was when the scan ended. */
+  lastScan: { scan: LaserScan; truePose: Pose2D; estimatedPose: Pose2D } | null;
   feedback: RobotFeedback | null;
   timeInS: number;
 }

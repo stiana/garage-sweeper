@@ -34,7 +34,7 @@ export class SimulationSource implements RobotSource {
   private readonly gyroOdometry: DeadReckoning;
   private budgetInS = 0;
   private lastFeedback: RobotFeedback | null = null;
-  private lastScan: { scan: LaserScan; pose: Pose2D } | null = null;
+  private lastScan: { scan: LaserScan; truePose: Pose2D; estimatedPose: Pose2D } | null = null;
   private nextHistoryInS = 0;
   private wasColliding = false;
 
@@ -99,7 +99,7 @@ export class SimulationSource implements RobotSource {
     this.wasColliding = feedback.collided;
     if (feedback.scan) {
       this.scanCount++;
-      this.lastScan = { scan: feedback.scan, pose: this.gyroOdometry.pose };
+      this.lastScan = { scan: feedback.scan, truePose: feedback.truePose, estimatedPose: this.gyroOdometry.pose };
       this.hitMap.integrate(feedback.scan, this.gyroOdometry.pose);
     }
     if (this.simulation.timeInS >= this.nextHistoryInS) {

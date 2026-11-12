@@ -324,10 +324,12 @@ textarea { width: 100%; min-height: 110px; background: var(--bg); border: 1px so
         <div class="row">
           <button type="button" id="show-estimates" aria-pressed="true">Vis estimater</button>
           <button type="button" id="show-rays" aria-pressed="false">Vis stråler</button>
+          <button type="button" id="scan-at-estimate" aria-pressed="false">LIDAR ved estimat</button>
           <button type="button" id="show-hitmap" aria-pressed="false">Vis treffkart</button>
           <button type="button" id="clear-hitmap">Tøm treffkart</button>
         </div>
-        <p class="note">Treffkartet legger LIDAR-treff der roboten tror den er (hjul + gyro). Når odometrien driver, blir veggene utydelige. Det er dette scan matching skal løse.</p>
+        <p class="note">LIDAR-punktene tegnes ved sann posisjon. Med «LIDAR ved estimat» tegnes de der roboten tror den er (hjul + gyro), så du ser hvor mye skannet bommer når odometrien har drevet. Et skann tegnes når en hel runde er ferdig, og blir vridd når roboten svinger, akkurat som på en ekte LIDAR.</p>
+        <p class="note">Treffkartet samler alle treff ved estimatet. Når odometrien driver, blir veggene utydelige. Det er dette scan matching skal løse.</p>
       </div>
     </details>
 

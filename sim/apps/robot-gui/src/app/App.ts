@@ -23,7 +23,7 @@ export class App {
   private readonly renderer: Renderer;
   private readonly tools: PointerTools;
   private readonly plot: ErrorPlot;
-  private readonly layers: Layers = { showHitMap: false, showRays: false, showEstimates: true };
+  private readonly layers: Layers = { showHitMap: false, showRays: false, showEstimates: true, scanAtTruePose: true };
   private lastFrameInMs = performance.now();
   private lastReadoutInMs = 0;
   private objectCounter = 0;
@@ -165,6 +165,7 @@ export class App {
     });
 
     bindToggle("show-rays", (on) => (this.layers.showRays = on));
+    bindToggle("scan-at-estimate", (on) => (this.layers.scanAtTruePose = !on));
     bindToggle("show-hitmap", (on) => (this.layers.showHitMap = on));
     bindToggle("show-estimates", (on) => (this.layers.showEstimates = on));
     byId("clear-hitmap").addEventListener("click", () => this.source.hitMap.clear());

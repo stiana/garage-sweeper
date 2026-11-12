@@ -9,6 +9,8 @@ export interface Layers {
   showHitMap: boolean;
   showRays: boolean;
   showEstimates: boolean;
+  /** Draw LIDAR points at the true pose (follows the robot) or at the estimate (shows drift). */
+  scanAtTruePose: boolean;
 }
 
 export interface Overlay {
@@ -60,7 +62,10 @@ export class Renderer {
     for (const object of world.objects) this.drawShape(object, t.objectFill, t.object, overlay.selectedId === object.id);
     this.drawDock(world.dockPose);
     this.drawAnnotations(annotations, overlay);
-    if (view.lastScan) this.drawScan(view.lastScan.scan.rangesInM, view.lastScan.scan.angleMinInRad, view.lastScan.scan.angleIncrementInRad, view.lastScan.pose, layers.showRays);
+    if (view.lastScan) {
+      const { scan, truePose, estimatedPose } = view.lastScan;
+      this.drawScan(scan.rangesInM, scan.angleMinInRad, scan.angleIncrementInRad, layers.scanAtTruePose ? truePose : estimatedPose, layers.showRays);
+    }
     if (layers.showEstimates) {
       for (const estimate of view.estimates) {
         this.drawRobot(estimate.pose, overlay.bodyRadiusInM, estimate.id === "gyro" ? t.gyro : t.wheels, true);
