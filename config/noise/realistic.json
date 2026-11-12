@@ -1,0 +1,7 @@
+{
+  "name": "Realistisk",
+  "odometry": { "wheelRadiusErrorLeft": 0.005, "wheelRadiusErrorRight": -0.003, "trackWidthError": 0.01, "slipSigma": 0.02 },
+  "gyro": { "biasInDegPerS": 0.1, "biasRandomWalkInDegPerSPerSqrtS": 0.005, "whiteNoiseInDegPerS": 0.05, "scaleError": 0.005 },
+  "accelerometer": { "whiteNoiseInMPerS2": 0.05 },
+  "lidar": { "rangeSigmaInM": 0.01, "rangeSigmaRelative": 0.005, "dropoutProbability": 0.02, "spuriousProbability": 0.001 }
+}

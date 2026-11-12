@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="Accelerometer_Simulated" Id="{4c7be470-05ab-5175-8ee2-55f53b33fcd1}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK Accelerometer_Simulated IMPLEMENTS I_Accelerometer
+VAR
+	link : REFERENCE TO SimulatorLink;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{8db6a0a0-9b3a-50be-af2c-5eaf94e8b1a3}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL;
+	bInCopyCode : BOOL;
+	simulatorLink : REFERENCE TO SimulatorLink;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[link REF= simulatorLink;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="AccelerationInMPerS2" Id="{3cdf711d-364c-50fc-95bd-905692904ae6}">
+      <Declaration><![CDATA[PROPERTY AccelerationInMPerS2 : Vector3]]></Declaration>
+      <Get Name="Get" Id="{4c3af306-ede9-5442-8072-437fdf85f2d3}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[AccelerationInMPerS2 := SimulatorIo.feedback.accelerationInMPerS2;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="TimestampInNs" Id="{c7940b2a-d44f-5735-9ee7-c7cf5f4f8864}">
+      <Declaration><![CDATA[PROPERTY TimestampInNs : ULINT]]></Declaration>
+      <Get Name="Get" Id="{1105b718-f12c-5f89-a472-0749bd7c984b}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TimestampInNs := SimulatorIo.feedback.timeInNs;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsValid" Id="{dbbe89e6-0553-5096-8e51-77adf47f0320}">
+      <Declaration><![CDATA[PROPERTY IsValid : BOOL]]></Declaration>
+      <Get Name="Get" Id="{42ce643a-0423-576e-bae9-c717efeaa091}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsValid := __ISVALIDREF(link) AND_THEN link.IsConnected;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

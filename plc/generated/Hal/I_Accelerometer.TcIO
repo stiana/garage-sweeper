@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <Itf Name="I_Accelerometer" Id="{4df7a45b-ba0b-5932-a8e0-8f729a3a027e}">
+    <Declaration><![CDATA[INTERFACE I_Accelerometer]]></Declaration>
+    <Property Name="AccelerationInMPerS2" Id="{38226d2c-778e-55a7-a7e6-c8884d8b7a30}">
+      <Declaration><![CDATA[PROPERTY AccelerationInMPerS2 : Vector3]]></Declaration>
+      <Get Name="Get" Id="{4e4c0415-e88e-54aa-9f91-3b54d30c66b8}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="TimestampInNs" Id="{33cf4371-98ef-5903-87e1-65261f5c03dd}">
+      <Declaration><![CDATA[PROPERTY TimestampInNs : ULINT]]></Declaration>
+      <Get Name="Get" Id="{857d7dca-706d-5711-af7d-94e17549a80c}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="IsValid" Id="{2d77484d-cff3-5ede-86fe-65dc71906384}">
+      <Declaration><![CDATA[PROPERTY IsValid : BOOL]]></Declaration>
+      <Get Name="Get" Id="{110d3938-ce3d-5afe-adbf-60330f7ba0d7}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

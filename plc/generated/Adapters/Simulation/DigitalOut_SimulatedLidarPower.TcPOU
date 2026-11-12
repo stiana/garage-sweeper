@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="DigitalOut_SimulatedLidarPower" Id="{243003c7-d927-5a12-93fe-9aa1f43afc6f}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK DigitalOut_SimulatedLidarPower IMPLEMENTS I_DigitalOut]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="SwitchOn" Id="{d4eaa0b9-30be-533e-9867-d3301cd5a44b}">
+      <Declaration><![CDATA[METHOD SwitchOn]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SimulatorIo.command.isLidarPowered := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SwitchOff" Id="{6cced5eb-1e30-5a7f-b154-1c01b9af7853}">
+      <Declaration><![CDATA[METHOD SwitchOff]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SimulatorIo.command.isLidarPowered := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="IsOn" Id="{4f6541ec-7946-5147-82bd-3e6dd9e5f304}">
+      <Declaration><![CDATA[PROPERTY IsOn : BOOL]]></Declaration>
+      <Get Name="Get" Id="{3defebcf-26de-52cb-a7cb-918d176972ca}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsOn := SimulatorIo.command.isLidarPowered;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

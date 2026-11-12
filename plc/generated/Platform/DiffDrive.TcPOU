@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="DiffDrive" Id="{0bbf6c55-3be5-53ce-af2a-579f36f57573}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK DiffDrive IMPLEMENTS I_DifferentialDrive
+VAR
+	leftAxis : I_DriveAxis;
+	rightAxis : I_DriveAxis;
+	kinematics : DiffDriveKinematics;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Connect" Id="{097fee2a-ff23-58d4-b286-94e459e4269d}">
+      <Declaration><![CDATA[METHOD Connect
+VAR_INPUT
+	left : I_DriveAxis;
+	right : I_DriveAxis;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[leftAxis := left;
+rightAxis := right;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Enable" Id="{baa38bb0-278d-5e8a-871b-b137239c7090}">
+      <Declaration><![CDATA[METHOD Enable]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF leftAxis = 0 OR rightAxis = 0 THEN
+	RETURN;
+END_IF
+leftAxis.Enable();
+rightAxis.Enable();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Disable" Id="{486dcacc-469b-5018-a8d0-ca66e8aaca6a}">
+      <Declaration><![CDATA[METHOD Disable]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF leftAxis = 0 OR rightAxis = 0 THEN
+	RETURN;
+END_IF
+leftAxis.Disable();
+rightAxis.Disable();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetTwist" Id="{098b0635-eb47-5c17-a9bd-67e37e18d5a2}">
+      <Declaration><![CDATA[METHOD SetTwist
+VAR_INPUT
+	twist : Twist;
+END_VAR
+VAR
+	speeds : WheelSpeeds;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF leftAxis = 0 OR rightAxis = 0 THEN
+	RETURN;
+END_IF
+speeds := kinematics.ToWheelSpeeds(twist);
+leftAxis.SetVelocity(speeds.leftInRadPerS);
+rightAxis.SetVelocity(speeds.rightInRadPerS);]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="LeftWheelPositionInRad" Id="{109afdba-85bc-55d5-9e0a-e2a00af29e49}">
+      <Declaration><![CDATA[PROPERTY LeftWheelPositionInRad : LREAL]]></Declaration>
+      <Get Name="Get" Id="{b274fc98-9da7-540a-beca-1aa4d32c89aa}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF leftAxis <> 0 THEN
+	LeftWheelPositionInRad := leftAxis.PositionInRad;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="RightWheelPositionInRad" Id="{dff3e45e-593f-5a6a-bab9-8340da331952}">
+      <Declaration><![CDATA[PROPERTY RightWheelPositionInRad : LREAL]]></Declaration>
+      <Get Name="Get" Id="{648b6731-c9af-5050-9322-9bc196995e65}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF rightAxis <> 0 THEN
+	RightWheelPositionInRad := rightAxis.PositionInRad;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsReady" Id="{0716dda0-318f-5c0b-9d2e-d407e343a688}">
+      <Declaration><![CDATA[PROPERTY IsReady : BOOL]]></Declaration>
+      <Get Name="Get" Id="{e8c996d9-55ee-583b-8f0d-bcac8b430915}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsReady := leftAxis <> 0 AND_THEN rightAxis <> 0 AND_THEN leftAxis.IsReady AND_THEN rightAxis.IsReady;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <DUT Name="HmiStatus" Id="{6dc03ffe-a80b-54c4-a7a6-fbb20cd05687}">
+    <Declaration><![CDATA[TYPE HmiStatus :
+STRUCT
+	acknowledgedSequence : UDINT;
+	missionState : MissionState;
+	lastRejection : STRING(80);
+	estimatedPose : Pose2D;
+	isSimulatorConnected : BOOL;
+	isLidarOk : BOOL;
+	hasMap : BOOL;
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

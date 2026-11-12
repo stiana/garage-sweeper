@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <GVL Name="Parameters" Id="{1597954a-e0f8-5851-b29a-c1b34e85d36f}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL PERSISTENT
+	platform : Platform := Platform.SIMULATION;
+	wheelRadiusInM : LREAL := 0.075;
+	trackWidthInM : LREAL := 0.40;
+	maxWheelSpeedInRadPerS : LREAL := 8.0;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

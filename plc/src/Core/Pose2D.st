@@ -1,0 +1,7 @@
+TYPE Pose2D :
+STRUCT
+	x : LREAL;
+	y : LREAL;
+	thetaInRad : LREAL;
+END_STRUCT
+END_TYPE

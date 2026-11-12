@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <Itf Name="I_DigitalOut" Id="{2fec7f26-66ea-510e-8e2c-720bc689c950}">
+    <Declaration><![CDATA[INTERFACE I_DigitalOut]]></Declaration>
+    <Method Name="SwitchOn" Id="{2c722ea5-f2c4-50e0-aeb5-4edd0b0fb292}">
+      <Declaration><![CDATA[METHOD SwitchOn]]></Declaration>
+    </Method>
+    <Method Name="SwitchOff" Id="{faa4dbff-6904-5b2d-b91a-18fec5c4fb79}">
+      <Declaration><![CDATA[METHOD SwitchOff]]></Declaration>
+    </Method>
+    <Property Name="IsOn" Id="{f8359847-95c8-59d4-871a-3479d5cf994e}">
+      <Declaration><![CDATA[PROPERTY IsOn : BOOL]]></Declaration>
+      <Get Name="Get" Id="{67236b3f-0699-5e1a-945b-2d4e38a64259}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

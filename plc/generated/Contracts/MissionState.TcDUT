@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <DUT Name="MissionState" Id="{0102ec50-52a0-5abf-a4f8-26d5d53ab57b}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+TYPE MissionState :
+(
+	IDLE := 0,
+	MANUAL,
+	MAPPING,
+	SWEEPING,
+	PAUSED,
+	RETURNING_TO_DOCK,
+	DOCKED,
+	EMERGENCY_STOPPED
+) INT;
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="DriveAxis_Simulated" Id="{41ea52d8-b4d0-5db6-81df-59cc5855790a}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK DriveAxis_Simulated IMPLEMENTS I_DriveAxis
+VAR
+	link : REFERENCE TO SimulatorLink;
+	side : WheelSide;
+	isEnabled : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{a3b6b933-e68e-5617-8fbb-8315f0194dda}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL;
+	bInCopyCode : BOOL;
+	simulatorLink : REFERENCE TO SimulatorLink;
+	wheelSide : WheelSide;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[link REF= simulatorLink;
+side := wheelSide;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Enable" Id="{ac4a18f5-de0c-5370-8a97-84bc61afc214}">
+      <Declaration><![CDATA[METHOD Enable]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[isEnabled := TRUE;
+WriteEnabled();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Disable" Id="{f36ff31a-dcfd-53b4-acf4-1846e24a85dc}">
+      <Declaration><![CDATA[METHOD Disable]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[isEnabled := FALSE;
+SetVelocity(0);
+WriteEnabled();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetVelocity" Id="{2685f0d0-0d34-5138-83cc-2c54b951dffa}">
+      <Declaration><![CDATA[METHOD SetVelocity
+VAR_INPUT
+	velocityInRadPerS : LREAL;
+END_VAR
+VAR
+	limited : LREAL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[limited := LIMIT(-Parameters.maxWheelSpeedInRadPerS, velocityInRadPerS, Parameters.maxWheelSpeedInRadPerS);
+IF NOT isEnabled THEN
+	limited := 0;
+END_IF
+IF side = WheelSide.LEFT THEN
+	SimulatorIo.command.leftWheelSetpointInRadPerS := limited;
+ELSE
+	SimulatorIo.command.rightWheelSetpointInRadPerS := limited;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryReset" Id="{a99ce1f4-6729-5dd1-a830-8f53d132fd66}">
+      <Declaration><![CDATA[METHOD TryReset : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TryReset := IsReady;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="WriteEnabled" Id="{39a98399-0bbc-59ab-9d34-81a4657cb18c}">
+      <Declaration><![CDATA[METHOD PRIVATE WriteEnabled]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF side = WheelSide.LEFT THEN
+	SimulatorIo.command.isLeftDriveEnabled := isEnabled;
+ELSE
+	SimulatorIo.command.isRightDriveEnabled := isEnabled;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="PositionInRad" Id="{d7612386-066b-5e66-bca6-fa15d574f5df}">
+      <Declaration><![CDATA[PROPERTY PositionInRad : LREAL]]></Declaration>
+      <Get Name="Get" Id="{4e5639da-5722-5e75-beb0-ac257b3c733c}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF side = WheelSide.LEFT THEN
+	PositionInRad := SimulatorIo.feedback.leftWheelAngleInRad;
+ELSE
+	PositionInRad := SimulatorIo.feedback.rightWheelAngleInRad;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="VelocityInRadPerS" Id="{292cb838-070b-5e83-8a24-fea4e703ef3b}">
+      <Declaration><![CDATA[PROPERTY VelocityInRadPerS : LREAL]]></Declaration>
+      <Get Name="Get" Id="{06957e18-d553-59e5-9a7d-99d9e4f339c1}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF side = WheelSide.LEFT THEN
+	VelocityInRadPerS := SimulatorIo.feedback.leftWheelVelocityInRadPerS;
+ELSE
+	VelocityInRadPerS := SimulatorIo.feedback.rightWheelVelocityInRadPerS;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsReady" Id="{3fac5cc4-92bb-5edc-a90a-0ba070ebda6b}">
+      <Declaration><![CDATA[PROPERTY IsReady : BOOL]]></Declaration>
+      <Get Name="Get" Id="{29f57d54-8962-51f4-8096-dc991b5406a5}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsReady := __ISVALIDREF(link) AND_THEN link.IsConnected AND isEnabled;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{47dce12e-2656-5a0a-8e78-d407b36dde07}">
+      <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
+      <Get Name="Get" Id="{75a31627-176d-537c-a57c-5a8cd49f753a}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF NOT __ISVALIDREF(link) OR_ELSE NOT link.IsConnected THEN
+	Error.isActive := TRUE;
+	Error.id := Constants.SIMULATOR_NOT_CONNECTED_ERROR_ID;
+	Error.text := 'Simulatoren er ikke tilkoblet';
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

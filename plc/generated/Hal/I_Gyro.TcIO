@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <Itf Name="I_Gyro" Id="{d341f671-4619-5705-a9b9-dfbaa4ce28e6}">
+    <Declaration><![CDATA[INTERFACE I_Gyro]]></Declaration>
+    <Method Name="StartBiasCalibration" Id="{a20645ba-519b-593b-91ad-e62ec84239fa}">
+      <Declaration><![CDATA[METHOD StartBiasCalibration]]></Declaration>
+    </Method>
+    <Property Name="YawRateInRadPerS" Id="{e7a7bfb5-fc38-5d8c-b307-bc14ecd30523}">
+      <Declaration><![CDATA[PROPERTY YawRateInRadPerS : LREAL]]></Declaration>
+      <Get Name="Get" Id="{ccd2e0be-13a5-5aac-9f6f-90cc330f9791}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="AngularRateInRadPerS" Id="{100af6f7-68bc-5735-9b00-36eac534f159}">
+      <Declaration><![CDATA[PROPERTY AngularRateInRadPerS : Vector3]]></Declaration>
+      <Get Name="Get" Id="{33af71ea-99f6-5bf6-9077-9c04c36b553a}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="TimestampInNs" Id="{c32d565e-3304-5161-a069-c926e6250203}">
+      <Declaration><![CDATA[PROPERTY TimestampInNs : ULINT]]></Declaration>
+      <Get Name="Get" Id="{ad33d0e5-d959-595e-b27f-c39567225e94}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="IsValid" Id="{e977ceac-fb9d-5a04-80ff-c5d284d9b4e8}">
+      <Declaration><![CDATA[PROPERTY IsValid : BOOL]]></Declaration>
+      <Get Name="Get" Id="{69562f4f-4448-557d-9107-bf7754cdf328}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

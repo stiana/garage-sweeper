@@ -1,0 +1,1 @@
+{ "id": "ld19", "name": "LD19", "points": 450, "rateInHz": 10, "minRangeInM": 0.03, "maxRangeInM": 12, "angleMinInRad": -3.14159265, "angleMaxInRad": 3.14159265 }

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="Lidar_Simulated" Id="{f8a143f8-acdc-5460-933b-52bfb9af5326}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK Lidar_Simulated IMPLEMENTS I_Lidar
+VAR
+	link : REFERENCE TO SimulatorLink;
+	_isRunning : BOOL;
+	lastSequence : UDINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{fc740cba-7289-561c-b90d-5fd3eff46435}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL;
+	bInCopyCode : BOOL;
+	simulatorLink : REFERENCE TO SimulatorLink;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[link REF= simulatorLink;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Start" Id="{03fce770-f4df-52ae-8699-2b3d6feada58}">
+      <Declaration><![CDATA[METHOD Start]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_isRunning := TRUE;
+lastSequence := SimulatorIo.scan.sequence;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Stop" Id="{dcbf6750-aa7a-585e-868d-049504cf92a4}">
+      <Declaration><![CDATA[METHOD Stop]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_isRunning := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryGetScan" Id="{23df3983-3889-5989-b13a-c98300787fbf}">
+      <Declaration><![CDATA[METHOD TryGetScan : BOOL
+VAR_INPUT
+	scan : REFERENCE TO LaserScan;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT _isRunning OR_ELSE SimulatorIo.scan.sequence = lastSequence THEN
+	RETURN;
+END_IF
+lastSequence := SimulatorIo.scan.sequence;
+scan := SimulatorIo.scan;
+TryGetScan := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="IsRunning" Id="{c9b9c1e0-5c86-51ec-a8a5-3edfe93d73b5}">
+      <Declaration><![CDATA[PROPERTY IsRunning : BOOL]]></Declaration>
+      <Get Name="Get" Id="{1f9915ee-0f5e-5956-8166-a1df040b8fe4}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsRunning := _isRunning;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{ef917698-682e-568a-9815-494f41f67a64}">
+      <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
+      <Get Name="Get" Id="{fad89dfc-b12c-549c-9702-76cce736f1fa}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF NOT __ISVALIDREF(link) OR_ELSE NOT link.IsConnected THEN
+	Error.isActive := TRUE;
+	Error.id := Constants.SIMULATOR_NOT_CONNECTED_ERROR_ID;
+	Error.text := 'Simulatoren er ikke tilkoblet';
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

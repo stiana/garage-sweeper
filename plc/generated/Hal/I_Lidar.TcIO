@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <Itf Name="I_Lidar" Id="{0d3fe80b-2d66-5794-8f3c-920f32f2296a}">
+    <Declaration><![CDATA[INTERFACE I_Lidar]]></Declaration>
+    <Method Name="Start" Id="{30df7c52-44c0-5d09-be3c-bb9f3e415b7c}">
+      <Declaration><![CDATA[METHOD Start]]></Declaration>
+    </Method>
+    <Method Name="Stop" Id="{c74b11f4-71d5-5075-aed5-7395c3032838}">
+      <Declaration><![CDATA[METHOD Stop]]></Declaration>
+    </Method>
+    <Method Name="TryGetScan" Id="{54ada5e3-844e-52e0-8673-86e30d7c2b37}">
+      <Declaration><![CDATA[METHOD TryGetScan : BOOL
+VAR_INPUT
+	scan : REFERENCE TO LaserScan;
+END_VAR]]></Declaration>
+    </Method>
+    <Property Name="IsRunning" Id="{54244f47-69ad-597a-ba0e-218a4cb7f82b}">
+      <Declaration><![CDATA[PROPERTY IsRunning : BOOL]]></Declaration>
+      <Get Name="Get" Id="{77158aad-602f-5432-8583-c402edf26d8e}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{ecf4da05-9385-578f-8431-c111a3eb0b2f}">
+      <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
+      <Get Name="Get" Id="{91eb81ce-d6d6-5fcf-9e61-fd06912f140c}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

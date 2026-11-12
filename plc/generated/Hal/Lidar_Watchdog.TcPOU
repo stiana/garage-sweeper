@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="Lidar_Watchdog" Id="{11055b29-6e9e-5314-983d-7ebae39fc2b9}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK Lidar_Watchdog IMPLEMENTS I_Lidar
+VAR
+	inner : I_Lidar;
+	timeoutTimer : TON;
+	isTimedOut : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Wrap" Id="{b8d46fca-05a4-56f2-8cb0-d35ef837e6f7}">
+      <Declaration><![CDATA[METHOD Wrap
+VAR_INPUT
+	lidar : I_Lidar;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[inner := lidar;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{1f8caded-dcfd-5177-afdb-eccd18e79341}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF inner = 0 THEN
+	RETURN;
+END_IF
+timeoutTimer(IN := inner.IsRunning, PT := Constants.LIDAR_TIMEOUT_IN_MS);
+IF timeoutTimer.Q THEN
+	isTimedOut := TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Start" Id="{8882ed4d-3a47-5d6e-b86e-9f8693655116}">
+      <Declaration><![CDATA[METHOD Start]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF inner <> 0 THEN
+	inner.Start();
+END_IF
+timeoutTimer(IN := FALSE);
+isTimedOut := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Stop" Id="{f2da4acb-3f55-5b16-be8a-4d1ea57efd3c}">
+      <Declaration><![CDATA[METHOD Stop]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF inner <> 0 THEN
+	inner.Stop();
+END_IF
+timeoutTimer(IN := FALSE);
+isTimedOut := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryGetScan" Id="{fff34688-a6e0-5382-9d37-5023f230c7ab}">
+      <Declaration><![CDATA[METHOD TryGetScan : BOOL
+VAR_INPUT
+	scan : REFERENCE TO LaserScan;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF inner = 0 OR_ELSE NOT inner.TryGetScan(scan) THEN
+	RETURN;
+END_IF
+timeoutTimer(IN := FALSE);
+isTimedOut := FALSE;
+TryGetScan := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="IsRunning" Id="{2c63264d-d2c8-587c-9556-76232fb1faa0}">
+      <Declaration><![CDATA[PROPERTY IsRunning : BOOL]]></Declaration>
+      <Get Name="Get" Id="{9c1f7fce-392c-5756-92e0-e337b7ba4617}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsRunning := inner <> 0 AND_THEN inner.IsRunning;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{5092db6b-38c6-5d81-9352-19c8af0a3350}">
+      <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
+      <Get Name="Get" Id="{ed4fe3fb-6d61-5641-9107-5cea4f8caf09}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IF isTimedOut THEN
+	Error.isActive := TRUE;
+	Error.id := Constants.LIDAR_TIMEOUT_ERROR_ID;
+	Error.text := 'Ingen LIDAR-skann innenfor fristen';
+ELSIF inner <> 0 THEN
+	Error := inner.Error;
+END_IF]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

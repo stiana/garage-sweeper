@@ -1,0 +1,16 @@
+INTERFACE I_DriveAxis
+METHOD Enable
+METHOD Disable
+METHOD SetVelocity
+VAR_INPUT
+	velocityInRadPerS : LREAL;
+END_VAR
+METHOD TryReset : BOOL
+PROPERTY PositionInRad : LREAL
+GET
+PROPERTY VelocityInRadPerS : LREAL
+GET
+PROPERTY IsReady : BOOL
+GET
+PROPERTY Error : HardwareError
+GET
