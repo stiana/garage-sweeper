@@ -18,11 +18,9 @@ VAR
 	motion : BodyMotion;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// OPPGAVE M1 (Stian): Gjør hjulenes strekning siden forrige syklus om til robotens strekning og kursendring.
-// Den motsatte veien av ToWheelSpeeds: snittet av hjulene gir strekning,
-// forskjellen delt på sporvidden gir kursendring.
-motion.distanceInM := 0;
-motion.headingChangeInRad := 0;
+        <ST><![CDATA[motion.distanceInM := (leftDeltaInM + rightDeltaInM) / 2.0;
+motion.headingChangeInRad := (rightDeltaInM - leftDeltaInM) / Parameters.trackWidthInM;
+
 ToBodyMotion := motion;]]></ST>
       </Implementation>
     </Method>
