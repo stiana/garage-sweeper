@@ -6,6 +6,7 @@
 {attribute 'enable_dynamic_creation'}
 FUNCTION_BLOCK Lidar_Simulated IMPLEMENTS I_Lidar
 VAR
+	notConnectedError : HardwareError := (isActive := TRUE, id := Constants.SIMULATOR_NOT_CONNECTED_ERROR_ID, text := 'Simulatoren er ikke tilkoblet');
 	link : REFERENCE TO SimulatorLink;
 	_isRunning : BOOL;
 	lastSequence : UDINT;
@@ -18,10 +19,10 @@ END_VAR]]></Declaration>
 VAR_INPUT
 	bInitRetains : BOOL;
 	bInCopyCode : BOOL;
-	simulatorLink : REFERENCE TO SimulatorLink;
+	simulator : REFERENCE TO SimulatorLink;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[link REF= simulatorLink;]]></ST>
+        <ST><![CDATA[link REF= simulator;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Start" Id="{03fce770-f4df-52ae-8699-2b3d6feada58}">
@@ -68,9 +69,7 @@ END_VAR]]></Declaration>
 END_VAR]]></Declaration>
         <Implementation>
           <ST><![CDATA[IF NOT __ISVALIDREF(link) OR_ELSE NOT link.IsConnected THEN
-	Error.isActive := TRUE;
-	Error.id := Constants.SIMULATOR_NOT_CONNECTED_ERROR_ID;
-	Error.text := 'Simulatoren er ikke tilkoblet';
+	Error := notConnectedError;
 END_IF]]></ST>
         </Implementation>
       </Get>

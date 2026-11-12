@@ -6,6 +6,7 @@
 {attribute 'enable_dynamic_creation'}
 FUNCTION_BLOCK DriveAxis_Simulated IMPLEMENTS I_DriveAxis
 VAR
+	notConnectedError : HardwareError := (isActive := TRUE, id := Constants.SIMULATOR_NOT_CONNECTED_ERROR_ID, text := 'Simulatoren er ikke tilkoblet');
 	link : REFERENCE TO SimulatorLink;
 	side : WheelSide;
 	isEnabled : BOOL;
@@ -18,12 +19,12 @@ END_VAR]]></Declaration>
 VAR_INPUT
 	bInitRetains : BOOL;
 	bInCopyCode : BOOL;
-	simulatorLink : REFERENCE TO SimulatorLink;
-	wheelSide : WheelSide;
+	simulator : REFERENCE TO SimulatorLink;
+	mountedSide : WheelSide;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[link REF= simulatorLink;
-side := wheelSide;]]></ST>
+        <ST><![CDATA[link REF= simulator;
+side := mountedSide;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Enable" Id="{ac4a18f5-de0c-5370-8a97-84bc61afc214}">
@@ -122,9 +123,7 @@ END_VAR]]></Declaration>
 END_VAR]]></Declaration>
         <Implementation>
           <ST><![CDATA[IF NOT __ISVALIDREF(link) OR_ELSE NOT link.IsConnected THEN
-	Error.isActive := TRUE;
-	Error.id := Constants.SIMULATOR_NOT_CONNECTED_ERROR_ID;
-	Error.text := 'Simulatoren er ikke tilkoblet';
+	Error := notConnectedError;
 END_IF]]></ST>
         </Implementation>
       </Get>

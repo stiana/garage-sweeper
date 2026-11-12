@@ -81,7 +81,7 @@
     <Compile Include="generated\Core\Parameters.TcGVL">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="generated\Core\Platform.TcDUT">
+    <Compile Include="generated\Core\PlatformKind.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="generated\Core\Pose2D.TcDUT">

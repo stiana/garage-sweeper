@@ -94,9 +94,11 @@ END_VAR
 RobotHmi.status.lastRejection := reason;
 END_METHOD
 METHOD PRIVATE Stopped : Twist
+VAR
+	standingStill : Twist;
+END_VAR
 // @impl
-Stopped.forwardSpeedInMPerS := 0;
-Stopped.yawRateInRadPerS := 0;
+Stopped := standingStill;
 END_METHOD
 PROPERTY State : MissionState
 GET

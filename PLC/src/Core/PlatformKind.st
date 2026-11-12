@@ -1,6 +1,6 @@
 {attribute 'qualified_only'}
 {attribute 'strict'}
-TYPE Platform :
+TYPE PlatformKind :
 (
 	SIMULATION := 0,
 	HARDWARE

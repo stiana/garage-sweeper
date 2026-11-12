@@ -34,7 +34,7 @@ rightAxis.Disable();
 END_METHOD
 METHOD SetTwist
 VAR_INPUT
-	twist : Twist;
+	desiredTwist : Twist;
 END_VAR
 VAR
 	speeds : WheelSpeeds;
@@ -43,7 +43,7 @@ END_VAR
 IF leftAxis = 0 OR rightAxis = 0 THEN
 	RETURN;
 END_IF
-speeds := kinematics.ToWheelSpeeds(twist);
+speeds := kinematics.ToWheelSpeeds(desiredTwist);
 leftAxis.SetVelocity(speeds.leftInRadPerS);
 rightAxis.SetVelocity(speeds.rightInRadPerS);
 END_METHOD

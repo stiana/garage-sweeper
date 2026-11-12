@@ -3,7 +3,7 @@ METHOD Enable
 METHOD Disable
 METHOD SetTwist
 VAR_INPUT
-	twist : Twist;
+	desiredTwist : Twist;
 END_VAR
 PROPERTY LeftWheelPositionInRad : LREAL
 GET
