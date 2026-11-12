@@ -64,10 +64,24 @@ export interface StateMessage {
   plc: { isConnected: boolean; status: HmiStatusJson | null } | null;
 }
 
+/** How far one estimate ended from the truth after a test route. */
+export interface TestRouteResult {
+  id: string;
+  label: string;
+  positionErrorInM: number;
+  headingErrorInDeg: number;
+}
+
+export type TestRouteMessage =
+  | { type: "testRoute"; state: "started"; durationInS: number }
+  | { type: "testRoute"; state: "cancelled" }
+  | { type: "testRoute"; state: "done"; results: TestRouteResult[]; distanceInM: number; collisions: number; file: string };
+
 export type ServerMessage =
   | { type: "hello"; mode: "standalone" | "plc"; world: WorldDefinition; noiseId: string; lidarId: string; seed: number }
   | { type: "world"; world: WorldDefinition }
-  | StateMessage;
+  | StateMessage
+  | TestRouteMessage;
 
 export type ClientMessage =
   | { type: "world"; world: WorldDefinition }
@@ -79,4 +93,6 @@ export type ClientMessage =
   | { type: "restart"; seed?: number }
   | { type: "realign" }
   | { type: "drive"; twist: TwistJson }
-  | { type: "hmi"; code: HmiCommandCode };
+  | { type: "hmi"; code: HmiCommandCode }
+  /** Starts the test route, or stops it if it is running. */
+  | { type: "testRoute" };

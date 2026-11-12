@@ -9,10 +9,12 @@ export class LocalBackend implements Backend {
   readonly world: World;
   readonly plc = null;
   readonly canPause = true;
+  readonly canRunTestRoute = false;
   private readonly simulation: Simulation;
   private readonly source: SimulationSource;
   onWorldReplaced = () => {};
   onConnectionChanged = (_message: string) => {};
+  onTestRoute = () => {};
 
   constructor(definition: WorldDefinition, controller: KeyboardController) {
     this.world = new World(definition);
@@ -78,4 +80,5 @@ export class LocalBackend implements Backend {
   setCondition(condition: BodyCondition): void { this.simulation.setCondition(condition); }
   kidnap(pose: Pose2D): void { this.simulation.kidnap(pose); }
   sendHmi(): void {}
+  toggleTestRoute(): void {}
 }

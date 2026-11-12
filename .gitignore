@@ -64,5 +64,8 @@ node_modules/
 dist/
 *.log
 
+### Test route logs (sim/runs) ###
+runs/
+
 ### Misc ###
 *.bak

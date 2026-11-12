@@ -1,5 +1,5 @@
 import { Vec2, type BodyCondition, type PlacedShape, type PoseEstimate, type World, type WorldDefinition } from "@garage/sim-core";
-import type { HmiCommandCode } from "@garage/gui-protocol";
+import type { HmiCommandCode, TestRouteMessage } from "@garage/gui-protocol";
 import type { Backend } from "../backend/Backend";
 import { LocalBackend } from "../backend/LocalBackend";
 import { RemoteBackend } from "../backend/RemoteBackend";
@@ -40,6 +40,7 @@ export class App {
       this.writeWorldJson();
     };
     this.backend.onConnectionChanged = (message) => this.say(message);
+    this.backend.onTestRoute = (message) => this.showTestRoute(message);
     const canvas = byId<HTMLCanvasElement>("view");
     this.renderer = new Renderer(canvas, this.camera);
     this.plot = new ErrorPlot(byId<HTMLCanvasElement>("error-plot"));
@@ -190,6 +191,30 @@ export class App {
       this.backend.realign();
       this.backend.hitMap.clear();
     });
+    byId("test-route").addEventListener("click", () => this.backend.toggleTestRoute());
+  }
+
+  private showTestRoute(message: TestRouteMessage): void {
+    const button = byId("test-route");
+    const result = byId("test-route-result");
+    const number = (value: number, digits: number) => value.toLocaleString("nb-NO", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    switch (message.state) {
+      case "started":
+        button.textContent = "Stopp testløypa";
+        result.textContent = `Kjører testløypa, cirka ${number(message.durationInS, 0)} s. Ikke kjør selv mens den går.`;
+        break;
+      case "cancelled":
+        button.textContent = "Kjør testløype";
+        result.textContent = "Testløypa ble avbrutt.";
+        break;
+      case "done": {
+        button.textContent = "Kjør testløype";
+        const lines = message.results.map((r) => `${r.label}: ${number(r.positionErrorInM, 3)} m, ${number(r.headingErrorInDeg, 1)}°`);
+        const warning = message.collisions > 0 ? ` Roboten kolliderte ${message.collisions} ganger, så tallene er ikke sammenlignbare.` : "";
+        result.textContent = `Ferdig etter ${number(message.distanceInM, 1)} m.${warning}\n${lines.join("\n")}\nLagret i ${message.file}`;
+        break;
+      }
+    }
   }
 
   private sendFaults(lidar: HTMLButtonElement, gyro: HTMLButtonElement): void {
@@ -199,6 +224,7 @@ export class App {
   /** Shows what only makes sense where the robot runs: pause and speed here, mission buttons with a PLC. */
   private showMode(): void {
     document.querySelectorAll<HTMLElement>(".only-local").forEach((el) => (el.hidden = !this.backend.canPause));
+    document.querySelectorAll<HTMLElement>(".only-server").forEach((el) => (el.hidden = !this.backend.canRunTestRoute));
   }
 
   private setCondition(condition: BodyCondition, other: HTMLButtonElement): void {

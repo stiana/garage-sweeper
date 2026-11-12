@@ -32,6 +32,8 @@ node apps/robot-server/dist/server.js --plc     # mot lokal TwinCAT, port 851
 
 Åpne http://localhost:8080. GUI-en er den samme som den frittstående, men roboten kjører i serveren, og flere nettlesere kan følge med samtidig. Endringer i garasjen sendes til serveren. Panelet *Oppdrag* har driftsknappene (start kartlegging, start feiing, gå til lader, pause, stopp og nødstopp). De er bare aktive når serveren har kontakt med PLC-en, og PLC-ens svar vises under knappene. Med `--plc` leser serveren `SimulatorIo.command` og `RobotHmi.status` fra PLC-en via ADS og skriver tilbake sensordata. Mot en annen maskin: `--ams-net-id 5.x.y.z.1.1 --router-address <ip>`.
 
+**Testløype:** knappen *Kjør testløype* (under feilene) setter estimatene til sann posisjon, står stille i 10 s og kjører så tre runder i en firkant på 1 × 1 m med venstresving fra der roboten står. Kjøringen går gjennom PLC-en når den er koblet til. Etterpå vises sluttfeilen for hvert estimat, og hele forløpet lagres som CSV i `runs/` under mappen serveren ble startet fra. Ruta kjøres uten tilbakekobling, så hjørnene blir ikke eksakte, men alle kjøringer blir like. Da kan du sammenligne algoritmer og støyprofiler.
+
 ## PLC
 
 PLC-prosjektet heter `PLC` og ligger i `PLC/`. Koden er ordnet etter lag: `Core`, `Contracts`, `Hal`, `Platform`, `Localization`, `Mission`, `Adapters` og `App`. Rediger i XAE som vanlig. Endringer fra Claude kommer som pull requests mot de samme `.TcPOU`-filene. PLC-tasken går på 10 ms.
