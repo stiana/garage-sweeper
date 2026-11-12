@@ -38,6 +38,12 @@ END_VAR]]></Declaration>
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
+    <Property Name="IsStandingStill" Id="{30e7cdb7-27d1-4523-ae26-5697947d7a3d}">
+      <Declaration><![CDATA[PROPERTY IsStandingStill : BOOL]]></Declaration>
+      <Get Name="Get" Id="{5615d136-8057-4a60-8351-b9dd3f0937a6}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
     <Property Name="Error" Id="{077314a0-d591-5246-a87a-d40cbf37e8c3}">
       <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
       <Get Name="Get" Id="{2c10dc1c-882a-5ba7-b59b-9e30c87023ed}">

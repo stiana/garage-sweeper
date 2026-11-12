@@ -105,5 +105,15 @@ END_VAR]]></Declaration>
         </Implementation>
       </Get>
     </Property>
+    <Property Name="IsStandingStill" Id="{9eaa38e4-969a-46e9-8447-5a679952e127}">
+      <Declaration><![CDATA[PROPERTY IsStandingStill : BOOL]]></Declaration>
+      <Get Name="Get" Id="{c6cf453b-3603-48b0-9504-ca7f6ef49e64}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsStandingStill := leftAxis <> 0 AND_THEN rightAxis <> 0 AND_THEN leftAxis.IsStandingStill AND_THEN rightAxis.IsStandingStill;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
   </POU>
 </TcPlcObject>
