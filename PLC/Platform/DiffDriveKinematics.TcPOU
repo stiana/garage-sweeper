@@ -33,13 +33,15 @@ VAR_INPUT
 END_VAR
 VAR
 	speeds : WheelSpeeds;
+	halfTrackInM : LREAL;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[speeds.leftInMPerS := desiredTwist.forwardSpeedInMPerS - desiredTwist.yawRateInRadPerS * Parameters.trackWidthInM / 2.0;
-speeds.rightInMPerS := desiredTwist.forwardSpeedInMPerS + desiredTwist.yawRateInRadPerS * Parameters.trackWidthInM / 2.0;
+        <ST><![CDATA[halfTrackInM := Parameters.trackWidthInM / 2.0;
 
-ToWheelSpeeds := speeds;
-]]></ST>
+speeds.leftInMPerS := desiredTwist.forwardSpeedInMPerS - desiredTwist.yawRateInRadPerS * halfTrackInM;
+speeds.rightInMPerS := desiredTwist.forwardSpeedInMPerS + desiredTwist.yawRateInRadPerS * halfTrackInM;
+
+ToWheelSpeeds := speeds;]]></ST>
       </Implementation>
     </Method>
   </POU>
