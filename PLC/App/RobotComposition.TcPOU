@@ -103,6 +103,8 @@ isInitialized := TRUE;]]></ST>
       <Implementation>
         <ST><![CDATA[// I simuleringen er NC-aksene motor og enkoder. Simulatoren får vite hvor langt hjulene faktisk har gått,
 // lar de simulerte hjulene følge det nøyaktig, og flytter roboten etter det, med sluring og kollisjoner.
+SimulatorIo.command.leftWheelVelocityInMPerS := leftAxis.VelocityInMPerS;
+SimulatorIo.command.rightWheelVelocityInMPerS := rightAxis.VelocityInMPerS;
 SimulatorIo.command.leftWheelPositionInM := leftAxis.PositionInM;
 SimulatorIo.command.rightWheelPositionInM := rightAxis.PositionInM;
 SimulatorIo.command.isLeftDriveEnabled := leftAxis.IsReady;

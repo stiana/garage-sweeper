@@ -1,16 +1,22 @@
 /**
- * Makes a simulated wheel follow an NC axis position exactly.
+ * Makes a simulated wheel follow an NC axis without drifting away from it.
  *
- * Sending the axis velocity is not enough: it reaches the simulator late and
- * sometimes not at all, so the simulated wheel slowly drifts away from what NC
- * (and the PLC's odometry) says it has turned. Following the position instead
- * lets the wheel catch up after any delay, so the two never drift apart.
+ * The wheel runs at the axis velocity, and the difference to the axis
+ * position is corrected gently on top. Velocity alone reaches the simulator
+ * late and sometimes not at all, so the wheel would slowly drift away from
+ * what NC (and the PLC's odometry) says it has turned. Position alone would
+ * make the wheel speed jump every time an update arrives late, which the
+ * simulator reads as hard acceleration and turns into wheel slip. For the same
+ * reason the axis position is first moved forward by how old it is, so the
+ * difference left to correct is small and changes smoothly.
  */
 export class WheelFollower {
   private offsetInM: number | null = null;
 
   /** Above this the two are not the same motion any more, for example after a restart. */
   static readonly REANCHOR_ERROR_IN_M = 0.2;
+  /** How fast a position difference is corrected. Long enough to keep the wheel speed smooth. */
+  static readonly CATCH_UP_TIME_IN_S = 0.2;
 
   constructor(private readonly wheelRadiusInM: number) {}
 
@@ -19,8 +25,9 @@ export class WheelFollower {
     this.offsetInM = null;
   }
 
-  /** The wheel velocity that brings the wheel to the axis position by the end of the step. */
-  velocityInRadPerS(axisPositionInM: number, wheelAngleInRad: number, deltaTimeInS: number): number {
+  /** ageInS: how long ago the axis had this position and velocity. */
+  velocityInRadPerS(axisPositionInM: number, axisVelocityInMPerS: number, ageInS: number, wheelAngleInRad: number): number {
+    axisPositionInM += axisVelocityInMPerS * ageInS;
     const wheelPositionInM = wheelAngleInRad * this.wheelRadiusInM;
     if (this.offsetInM === null) this.offsetInM = axisPositionInM - wheelPositionInM;
     let errorInM = axisPositionInM - this.offsetInM - wheelPositionInM;
@@ -28,6 +35,6 @@ export class WheelFollower {
       this.offsetInM = axisPositionInM - wheelPositionInM;
       errorInM = 0;
     }
-    return errorInM / this.wheelRadiusInM / deltaTimeInS;
+    return (axisVelocityInMPerS + errorInM / WheelFollower.CATCH_UP_TIME_IN_S) / this.wheelRadiusInM;
   }
 }

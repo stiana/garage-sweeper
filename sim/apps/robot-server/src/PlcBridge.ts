@@ -6,7 +6,6 @@ import {
   type RobotCommand,
   type RobotController,
   type RobotFeedback,
-  STEP_IN_S,
   STOPPED_COMMAND,
 } from "@garage/sim-core";
 import { GyroAverager } from "./GyroAverager";
@@ -22,7 +21,7 @@ export interface PlcConnectionSettings {
   localAmsNetId?: string;
 }
 
-const PROTOCOL_VERSION = 3;
+const PROTOCOL_VERSION = 4;
 const MAX_SCAN_POINTS = 1024;
 const READ_INTERVAL_IN_MS = 5;
 const STATUS_INTERVAL_IN_MS = 100;
@@ -39,6 +38,8 @@ export class PlcBridge implements RobotController {
   private readonly client: Client;
   private latestCommand: PlcCommand | null = null;
   private lastFeedbackTimeInNs: number | null = null;
+  /** Simulation time when the latest command arrived, to know how old its axis positions are. */
+  private commandTimeInNs = 0;
   private readonly leftWheel: WheelFollower;
   private readonly rightWheel: WheelFollower;
   private readonly gyro = new GyroAverager();
@@ -111,11 +112,12 @@ export class PlcBridge implements RobotController {
 
     const command = this.latestCommand;
     if (!this.isConnected || !command) return STOPPED_COMMAND;
-    // The NC axes are the motors and encoders. The simulated wheels follow their
-    // position, then the simulator adds what NC cannot know: slip and collisions.
+    const ageInS = Math.max(0, (feedback.timeInNs - this.commandTimeInNs) / 1e9);
+    // The NC axes are the motors and encoders. The simulated wheels follow them,
+    // then the simulator adds what NC cannot know: slip and collisions.
     return {
-      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(command.leftWheelPositionInM, feedback.leftWheelAngleInRad, STEP_IN_S),
-      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(command.rightWheelPositionInM, feedback.rightWheelAngleInRad, STEP_IN_S),
+      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(command.leftWheelPositionInM, command.leftWheelVelocityInMPerS, ageInS, feedback.leftWheelAngleInRad),
+      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(command.rightWheelPositionInM, command.rightWheelVelocityInMPerS, ageInS, feedback.rightWheelAngleInRad),
       isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
       isLidarPowered: command.isLidarPowered,
     };
@@ -160,6 +162,7 @@ export class PlcBridge implements RobotController {
         throw new Error(`SimulatorIo-versjon ${command.version} i PLC-en, serveren forventer ${PROTOCOL_VERSION}`);
       }
       this.latestCommand = command;
+      this.commandTimeInNs = this.lastFeedbackTimeInNs ?? 0;
       const pose = command.estimatedPose;
       this.estimatedPose = new Pose2D(pose.x, pose.y, pose.thetaInRad);
 
@@ -196,6 +199,8 @@ export class PlcBridge implements RobotController {
 
 interface PlcCommand {
   version: number;
+  leftWheelVelocityInMPerS: number;
+  rightWheelVelocityInMPerS: number;
   leftWheelPositionInM: number;
   rightWheelPositionInM: number;
   isLeftDriveEnabled: boolean;
