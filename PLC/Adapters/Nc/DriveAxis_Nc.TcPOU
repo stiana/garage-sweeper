@@ -142,6 +142,16 @@ END_VAR]]></Declaration>
         </Implementation>
       </Get>
     </Property>
+    <Property Name="IsStandingStill" Id="{ce365e26-35b2-433f-be31-9ae241fcdd1d}">
+      <Declaration><![CDATA[PROPERTY IsStandingStill : BOOL]]></Declaration>
+      <Get Name="Get" Id="{22dde146-5fae-456b-aa4a-3ef11ff52044}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsStandingStill := __ISVALIDREF(axis) AND_THEN axis.Status.NotMoving;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Property Name="Error" Id="{aa06960f-775d-5ef8-890b-dab1f9076ab2}">
       <Declaration><![CDATA[PROPERTY Error : HardwareError]]></Declaration>
       <Get Name="Get" Id="{6c86eaf2-f8a7-5a40-ab6c-8e6462367c48}">

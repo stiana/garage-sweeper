@@ -35,5 +35,11 @@ END_VAR]]></Declaration>
         <Declaration><![CDATA[]]></Declaration>
       </Get>
     </Property>
+    <Property Name="IsStandingStill" Id="{8775144f-8fb1-4671-afca-7f2e04405925}">
+      <Declaration><![CDATA[PROPERTY IsStandingStill : BOOL]]></Declaration>
+      <Get Name="Get" Id="{57f0a5bb-7908-4de7-a8a1-6c269a7c3b00}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
   </Itf>
 </TcPlcObject>
