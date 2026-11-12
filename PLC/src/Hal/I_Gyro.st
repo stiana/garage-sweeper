@@ -1,0 +1,10 @@
+INTERFACE I_Gyro
+METHOD StartBiasCalibration
+PROPERTY YawRateInRadPerS : LREAL
+GET
+PROPERTY AngularRateInRadPerS : Vector3
+GET
+PROPERTY TimestampInNs : ULINT
+GET
+PROPERTY IsValid : BOOL
+GET

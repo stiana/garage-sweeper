@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="DiffDriveKinematics" Id="{79331de0-5a8b-57b6-bc0b-e22a30b63e2c}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK DiffDriveKinematics]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="ToWheelSpeeds" Id="{088634d7-9291-51c7-84cc-6014d4ff856d}">
+      <Declaration><![CDATA[METHOD ToWheelSpeeds : WheelSpeeds
+VAR_INPUT
+	twist : Twist;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPPGAVE M1 (Stian): Gjør robotens fart (twist) om til hjulhastigheter i rad/s.
+// Bruk Parameters.wheelRadiusInM og Parameters.trackWidthInM.
+// Tips: hvert hjul ligger trackWidth / 2 fra midten. Når roboten roterer med yawRate,
+// får hjulet på utsiden ekstra fart lik yawRate * trackWidth / 2.
+ToWheelSpeeds.leftInRadPerS := 0;
+ToWheelSpeeds.rightInRadPerS := 0;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ToBodyMotion" Id="{4216f1b7-dcf4-5184-ad60-bc9864ce41c2}">
+      <Declaration><![CDATA[METHOD ToBodyMotion : BodyMotion
+VAR_INPUT
+	leftDeltaInRad : LREAL;
+	rightDeltaInRad : LREAL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPPGAVE M1 (Stian): Gjør hjulrotasjon siden forrige syklus om til strekning og kursendring.
+// Den motsatte veien av ToWheelSpeeds: snittet av hjulene gir strekning,
+// forskjellen delt på sporvidden gir kursendring.
+ToBodyMotion.distanceInM := 0;
+ToBodyMotion.headingChangeInRad := 0;]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

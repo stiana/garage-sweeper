@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="RobotComposition" Id="{00b893f1-df08-5397-861a-dcbcde94bdb4}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK RobotComposition
+VAR
+	simulatorLink : SimulatorLink;
+	leftSimulatedAxis : DriveAxis_Simulated(simulatorLink := simulatorLink, wheelSide := WheelSide.LEFT);
+	rightSimulatedAxis : DriveAxis_Simulated(simulatorLink := simulatorLink, wheelSide := WheelSide.RIGHT);
+	simulatedGyro : Gyro_Simulated(simulatorLink := simulatorLink);
+	simulatedAccelerometer : Accelerometer_Simulated(simulatorLink := simulatorLink);
+	simulatedLidar : Lidar_Simulated(simulatorLink := simulatorLink);
+	simulatedLidarPower : DigitalOut_SimulatedLidarPower;
+
+	gyro : I_Gyro;
+	accelerometer : I_Accelerometer;
+	lidarPower : I_DigitalOut;
+	lidar : Lidar_Watchdog;
+	drive : DiffDrive;
+	odometry : WheelOdometry;
+	mission : SweepMission;
+
+	scan : LaserScan;
+	isInitialized : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Execute" Id="{9147f99d-0110-5b6e-80e6-1ee328a5f45f}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT isInitialized THEN
+	Initialize();
+END_IF
+
+IF Parameters.platform = Platform.SIMULATION THEN
+	simulatorLink.Execute();
+END_IF
+
+lidar.Execute();
+IF lidar.TryGetScan(scan) THEN
+	// Kommer i M3 og M4: kartoppdatering og scan matching.
+	;
+END_IF
+
+odometry.Execute();
+mission.Execute();
+
+IF mission.ShouldDrive THEN
+	drive.Enable();
+	drive.SetTwist(mission.DesiredTwist);
+ELSE
+	drive.Disable();
+END_IF
+
+PublishStatus();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialize" Id="{23fcb38d-200f-5401-b791-75ecff777860}">
+      <Declaration><![CDATA[METHOD PRIVATE Initialize
+VAR
+	start : Pose2D;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE Parameters.platform OF
+	Platform.SIMULATION:
+		drive.Connect(leftSimulatedAxis, rightSimulatedAxis);
+		gyro := simulatedGyro;
+		accelerometer := simulatedAccelerometer;
+		lidar.Wrap(simulatedLidar);
+		lidarPower := simulatedLidarPower;
+	Platform.HARDWARE:
+		// Kommer i M7: DriveAxis_Nc, Gyro_EP3751 og valgt LIDAR-adapter.
+		RETURN;
+END_CASE
+
+lidarPower.SwitchOn();
+lidar.Start();
+odometry.Connect(drive);
+odometry.Reset(start);
+isInitialized := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="PublishStatus" Id="{7cd620cb-62be-5d54-820f-dc5c4cebc267}">
+      <Declaration><![CDATA[METHOD PRIVATE PublishStatus]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[RobotHmi.status.estimatedPose := odometry.Pose;
+RobotHmi.status.isSimulatorConnected := simulatorLink.IsConnected;
+RobotHmi.status.isLidarOk := NOT lidar.Error.isActive;
+SimulatorIo.command.estimatedPose := odometry.Pose;]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

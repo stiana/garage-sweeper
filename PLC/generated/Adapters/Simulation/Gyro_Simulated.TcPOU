@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="Gyro_Simulated" Id="{4514b4b8-d81e-559f-97c2-245e28b90dbd}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK Gyro_Simulated IMPLEMENTS I_Gyro
+VAR
+	link : REFERENCE TO SimulatorLink;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{576750ad-b360-5306-b633-18829c7c943a}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL;
+	bInCopyCode : BOOL;
+	simulatorLink : REFERENCE TO SimulatorLink;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[link REF= simulatorLink;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StartBiasCalibration" Id="{a9e518d6-8ef0-5b9a-b66a-c86cdd4b5b62}">
+      <Declaration><![CDATA[METHOD StartBiasCalibration]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// The simulated gyro has no calibration of its own. Bias is estimated in HeadingFusion.]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="YawRateInRadPerS" Id="{6b8f2a0b-ed68-5a9b-95c6-c7e6ab0ab276}">
+      <Declaration><![CDATA[PROPERTY YawRateInRadPerS : LREAL]]></Declaration>
+      <Get Name="Get" Id="{bef85936-34ad-5498-81c2-ef0e5b7a88a0}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[YawRateInRadPerS := SimulatorIo.feedback.angularRateInRadPerS.z;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="AngularRateInRadPerS" Id="{5c71fdd9-2b7c-5963-bca3-c500b1b3304c}">
+      <Declaration><![CDATA[PROPERTY AngularRateInRadPerS : Vector3]]></Declaration>
+      <Get Name="Get" Id="{7861b59a-a0a0-5460-96e1-08b09760ed98}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[AngularRateInRadPerS := SimulatorIo.feedback.angularRateInRadPerS;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="TimestampInNs" Id="{719c20c0-1047-5d5f-ac84-ede0bf00fd8a}">
+      <Declaration><![CDATA[PROPERTY TimestampInNs : ULINT]]></Declaration>
+      <Get Name="Get" Id="{8cc0bfd1-f9c2-5741-907c-d08b5ca383b0}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TimestampInNs := SimulatorIo.feedback.timeInNs;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsValid" Id="{5e8d67d2-6198-57c5-ba2d-3450b85e5bec}">
+      <Declaration><![CDATA[PROPERTY IsValid : BOOL]]></Declaration>
+      <Get Name="Get" Id="{8d2806f6-a03d-5243-849f-b5ae1f51b6e5}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsValid := __ISVALIDREF(link) AND_THEN link.IsConnected;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

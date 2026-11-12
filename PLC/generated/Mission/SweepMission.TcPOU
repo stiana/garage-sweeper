@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="SweepMission" Id="{e41591d1-bb67-5c93-93c1-653c454fd246}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK SweepMission
+VAR
+	_state : MissionState := MissionState.IDLE;
+	stateBeforePause : MissionState;
+	lastSequence : UDINT;
+	_desiredTwist : Twist;
+	_hasMap : BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Execute" Id="{0edb486b-e6d2-5352-ac1f-a2f72835a724}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF RobotHmi.command.sequence <> lastSequence THEN
+	lastSequence := RobotHmi.command.sequence;
+	Handle(RobotHmi.command.code);
+	RobotHmi.status.acknowledgedSequence := lastSequence;
+END_IF
+
+CASE _state OF
+	MissionState.MANUAL:
+		_desiredTwist := RobotHmi.command.manualTwist;
+	MissionState.MAPPING, MissionState.SWEEPING, MissionState.RETURNING_TO_DOCK:
+		// Kommer i M5 og M6: kartlegging, feiing og retur til lader.
+		_desiredTwist := Stopped();
+ELSE
+	_desiredTwist := Stopped();
+END_CASE
+
+RobotHmi.status.missionState := _state;
+RobotHmi.status.hasMap := _hasMap;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Handle" Id="{b572e568-37ab-508b-b7c6-42fbd5147f7e}">
+      <Declaration><![CDATA[METHOD PRIVATE Handle
+VAR_INPUT
+	code : HmiCommandCode;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[RobotHmi.status.lastRejection := '';
+
+IF code = HmiCommandCode.EMERGENCY_STOP THEN
+	_state := MissionState.EMERGENCY_STOPPED;
+	RETURN;
+END_IF
+IF _state = MissionState.EMERGENCY_STOPPED AND code <> HmiCommandCode.RESET THEN
+	Reject('Nødstopp er aktiv. Tilbakestill først.');
+	RETURN;
+END_IF
+
+CASE code OF
+	HmiCommandCode.RESET:
+		_state := MissionState.IDLE;
+	HmiCommandCode.MANUAL_DRIVE:
+		IF IsBusy() THEN
+			Reject('Stopp oppdraget før du kjører manuelt.');
+		ELSE
+			_state := MissionState.MANUAL;
+		END_IF
+	HmiCommandCode.START_MAPPING:
+		_state := MissionState.MAPPING;
+	HmiCommandCode.START_SWEEPING:
+		IF _hasMap THEN
+			_state := MissionState.SWEEPING;
+		ELSE
+			Reject('Kartet mangler. Kjør kartlegging først.');
+		END_IF
+	HmiCommandCode.PAUSE:
+		IF IsBusy() THEN
+			stateBeforePause := _state;
+			_state := MissionState.PAUSED;
+		ELSE
+			Reject('Det er ikke noe oppdrag å pause.');
+		END_IF
+	HmiCommandCode.RESUME:
+		IF _state = MissionState.PAUSED THEN
+			_state := stateBeforePause;
+		ELSE
+			Reject('Det er ikke noe pauset oppdrag.');
+		END_IF
+	HmiCommandCode.STOP:
+		_state := MissionState.IDLE;
+	HmiCommandCode.GO_TO_DOCK:
+		_state := MissionState.RETURNING_TO_DOCK;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsBusy" Id="{eda4ea94-5c3e-599c-aad6-57368444694f}">
+      <Declaration><![CDATA[METHOD PRIVATE IsBusy : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IsBusy := _state = MissionState.MAPPING OR _state = MissionState.SWEEPING OR _state = MissionState.RETURNING_TO_DOCK;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reject" Id="{29783acd-ce63-5b0b-b23a-8706aa79491f}">
+      <Declaration><![CDATA[METHOD PRIVATE Reject
+VAR_INPUT
+	reason : STRING(80);
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[RobotHmi.status.lastRejection := reason;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Stopped" Id="{79198e0b-a880-5d10-9263-47f1f8f4786f}">
+      <Declaration><![CDATA[METHOD PRIVATE Stopped : Twist]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Stopped.forwardSpeedInMPerS := 0;
+Stopped.yawRateInRadPerS := 0;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="State" Id="{dbdbf95e-8f4b-5a68-9ddb-a6be58b8826a}">
+      <Declaration><![CDATA[PROPERTY State : MissionState]]></Declaration>
+      <Get Name="Get" Id="{bb6bc095-2963-5642-bdbb-9e67613a7d7e}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[State := _state;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="DesiredTwist" Id="{b9558c05-0211-5579-82fb-906b1dff166c}">
+      <Declaration><![CDATA[PROPERTY DesiredTwist : Twist]]></Declaration>
+      <Get Name="Get" Id="{a3c88e9d-a866-53f0-a45a-d5c638ad65c5}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[DesiredTwist := _desiredTwist;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="ShouldDrive" Id="{148580db-2e22-5441-b6bc-6a52e4c70a85}">
+      <Declaration><![CDATA[PROPERTY ShouldDrive : BOOL]]></Declaration>
+      <Get Name="Get" Id="{34c545f2-47da-5fc5-b10b-7f2406f59224}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ShouldDrive := _state = MissionState.MANUAL OR IsBusy();]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

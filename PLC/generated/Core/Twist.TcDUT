@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <DUT Name="Twist" Id="{207cb6b7-3a83-5000-b464-3550e4a0bcf8}">
+    <Declaration><![CDATA[TYPE Twist :
+STRUCT
+	forwardSpeedInMPerS : LREAL;
+	yawRateInRadPerS : LREAL;
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

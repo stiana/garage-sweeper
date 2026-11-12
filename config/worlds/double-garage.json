@@ -1,0 +1,110 @@
+{
+  "name": "Dobbelgarasje med én bil",
+  "walls": [
+    {
+      "id": "outline",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          0,
+          6
+        ]
+      ],
+      "closed": true,
+      "reflectivity": 0.8
+    }
+  ],
+  "objects": [
+    {
+      "id": "car",
+      "kind": "car",
+      "label": "Bil",
+      "shape": {
+        "type": "rect",
+        "widthInM": 1.85,
+        "lengthInM": 4.6
+      },
+      "x": 1.6,
+      "y": 2.9,
+      "thetaInRad": 1.5708,
+      "reflectivity": 0.25
+    },
+    {
+      "id": "shelf-1",
+      "kind": "shelf",
+      "label": "Hylle",
+      "shape": {
+        "type": "rect",
+        "widthInM": 0.5,
+        "lengthInM": 2.0
+      },
+      "x": 4.4,
+      "y": 5.7,
+      "thetaInRad": 0,
+      "reflectivity": 0.7
+    },
+    {
+      "id": "bin-1",
+      "kind": "bin",
+      "label": "Dunk",
+      "shape": {
+        "type": "circle",
+        "radiusInM": 0.3
+      },
+      "x": 5.5,
+      "y": 0.6,
+      "thetaInRad": 0,
+      "reflectivity": 0.4
+    },
+    {
+      "id": "bike-1",
+      "kind": "bike",
+      "label": "Sykkel",
+      "shape": {
+        "type": "rect",
+        "widthInM": 0.25,
+        "lengthInM": 1.7
+      },
+      "x": 5.7,
+      "y": 3.2,
+      "thetaInRad": 1.5708,
+      "reflectivity": 0.5
+    }
+  ],
+  "floorZones": [
+    {
+      "id": "oil-1",
+      "kind": "oil",
+      "label": "Oljeflekk",
+      "shape": {
+        "type": "circle",
+        "radiusInM": 0.4
+      },
+      "x": 3.6,
+      "y": 2.2,
+      "thetaInRad": 0,
+      "friction": 0.3
+    }
+  ],
+  "start": {
+    "x": 4.2,
+    "y": 1.0,
+    "thetaInRad": 1.5708
+  },
+  "dock": {
+    "x": 4.2,
+    "y": 0.35,
+    "thetaInRad": 1.5708
+  }
+}

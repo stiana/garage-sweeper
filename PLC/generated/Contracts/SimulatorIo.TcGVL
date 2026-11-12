@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <GVL Name="SimulatorIo" Id="{9fa4ee25-d7a0-5946-92a6-d883b06d34b4}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	command : SimulatorCommand;
+	feedback : SimulatorFeedback;
+	scan : LaserScan;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

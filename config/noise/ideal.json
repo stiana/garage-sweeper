@@ -1,0 +1,7 @@
+{
+  "name": "Ideell",
+  "odometry": { "wheelRadiusErrorLeft": 0, "wheelRadiusErrorRight": 0, "trackWidthError": 0, "slipSigma": 0 },
+  "gyro": { "biasInDegPerS": 0, "biasRandomWalkInDegPerSPerSqrtS": 0, "whiteNoiseInDegPerS": 0, "scaleError": 0 },
+  "accelerometer": { "whiteNoiseInMPerS2": 0 },
+  "lidar": { "rangeSigmaInM": 0, "rangeSigmaRelative": 0, "dropoutProbability": 0, "spuriousProbability": 0 }
+}

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="WheelOdometry" Id="{0383d384-f1af-5157-a3ab-6329c1f8f315}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK WheelOdometry IMPLEMENTS I_PoseSource
+VAR
+	drive : I_DifferentialDrive;
+	kinematics : DiffDriveKinematics;
+	_pose : Pose2D;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Connect" Id="{9586be9c-1b18-592a-ac72-9a0cd025658c}">
+      <Declaration><![CDATA[METHOD Connect
+VAR_INPUT
+	differentialDrive : I_DifferentialDrive;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[drive := differentialDrive;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reset" Id="{eac72228-2ae7-507b-bd27-7b6833793730}">
+      <Declaration><![CDATA[METHOD Reset
+VAR_INPUT
+	pose : Pose2D;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_pose := pose;
+// OPPGAVE M1 (Stian): Husk også hjulvinklene akkurat nå, så første Execute ikke tror roboten har hoppet.]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Execute" Id="{2ece7e54-0fcd-5291-83ae-9ff6c29c3813}">
+      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// OPPGAVE M1 (Stian): Oppdater _pose fra hjulene, én gang per syklus.
+// 1. Les drive.LeftWheelPositionInRad og drive.RightWheelPositionInRad.
+// 2. Finn hvor mye hvert hjul har rotert siden forrige syklus, og ta vare på verdiene til neste gang.
+// 3. Bruk kinematics.ToBodyMotion til å få strekning og kursendring.
+// 4. Flytt _pose: bruk kursen midt i steget (theta + endring / 2) for x og y, og normaliser theta til (-pi, pi].
+// I simulatoren skal den da følge den orange roboten nøyaktig.]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Pose" Id="{7cb73c2f-8b0e-5f16-82ed-16a14c60a740}">
+      <Declaration><![CDATA[PROPERTY Pose : Pose2D]]></Declaration>
+      <Get Name="Get" Id="{0a0650ae-20a5-5470-a202-fff7e5873f72}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Pose := _pose;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

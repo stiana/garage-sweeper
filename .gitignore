@@ -58,3 +58,11 @@ LineIDs.dbg.bak
 
 # TwinCAT Measurement
 *.vsm
+
+### Node (sim/) ###
+node_modules/
+dist/
+*.log
+
+### Misc ###
+*.bak

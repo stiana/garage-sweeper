@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <Itf Name="I_DifferentialDrive" Id="{85909425-9268-52b7-9db9-1e67d6afd42c}">
+    <Declaration><![CDATA[INTERFACE I_DifferentialDrive]]></Declaration>
+    <Method Name="Enable" Id="{c017d325-fb79-52f8-9bdd-78a4ca5290c9}">
+      <Declaration><![CDATA[METHOD Enable]]></Declaration>
+    </Method>
+    <Method Name="Disable" Id="{e0109796-b129-527b-9f1e-df98fa7b3144}">
+      <Declaration><![CDATA[METHOD Disable]]></Declaration>
+    </Method>
+    <Method Name="SetTwist" Id="{117cb1ef-893c-5181-bcd7-b8426eef764c}">
+      <Declaration><![CDATA[METHOD SetTwist
+VAR_INPUT
+	twist : Twist;
+END_VAR]]></Declaration>
+    </Method>
+    <Property Name="LeftWheelPositionInRad" Id="{2615bd70-b9cd-5bd3-85aa-b453e5643152}">
+      <Declaration><![CDATA[PROPERTY LeftWheelPositionInRad : LREAL]]></Declaration>
+      <Get Name="Get" Id="{061e5763-70a6-5402-8f99-bcaea36b2436}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="RightWheelPositionInRad" Id="{6b7d8184-d2bc-5d9e-846d-534c5dc70c76}">
+      <Declaration><![CDATA[PROPERTY RightWheelPositionInRad : LREAL]]></Declaration>
+      <Get Name="Get" Id="{97c39443-c38e-5b00-87af-8c7b7c08baa8}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Property Name="IsReady" Id="{1fff83d3-9da1-536a-a66d-02de1948d2fa}">
+      <Declaration><![CDATA[PROPERTY IsReady : BOOL]]></Declaration>
+      <Get Name="Get" Id="{00c36e97-9830-5cca-886e-83179da3f416}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>
