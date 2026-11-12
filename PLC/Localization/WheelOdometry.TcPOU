@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
   <POU Name="WheelOdometry" Id="{0383d384-f1af-5157-a3ab-6329c1f8f315}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'linkalways'}
 {attribute 'no_explicit_call' := 'Use the methods of this class'}
@@ -9,6 +9,8 @@ VAR
 	drive : I_DifferentialDrive;
 	kinematics : DiffDriveKinematics;
 	_pose : Pose2D;
+	lastLeftInM : LREAL;
+	lastRightInM : LREAL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
@@ -22,25 +24,39 @@ END_VAR]]></Declaration>
         <ST><![CDATA[drive := differentialDrive;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="Reset" Id="{eac72228-2ae7-507b-bd27-7b6833793730}">
-      <Declaration><![CDATA[METHOD Reset
-VAR_INPUT
-	pose : Pose2D;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[_pose := pose;
-// OPPGAVE M1 (Stian): Husk også hjulposisjonene akkurat nå, så første Execute ikke tror roboten har hoppet.]]></ST>
-      </Implementation>
-    </Method>
     <Method Name="Execute" Id="{2ece7e54-0fcd-5291-83ae-9ff6c29c3813}">
-      <Declaration><![CDATA[METHOD Execute]]></Declaration>
+      <Declaration><![CDATA[METHOD Execute
+VAR
+	leftInM : LREAL;
+	rightinM : LREAL;
+	motion : BodyMotion;
+	midHeadingInRad : LREAL;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// OPPGAVE M1 (Stian): Oppdater _pose fra hjulene, én gang per syklus.
 // 1. Les drive.LeftWheelPositionInM og drive.RightWheelPositionInM.
 // 2. Finn hvor langt hvert hjul har gått siden forrige syklus, og ta vare på verdiene til neste gang.
 // 3. Bruk kinematics.ToBodyMotion til å få strekning og kursendring.
 // 4. Flytt _pose: bruk kursen midt i steget (theta + endring / 2) for x og y, og normaliser theta til (-pi, pi].
-// I simulatoren skal den da følge den orange roboten nøyaktig.]]></ST>
+// I simulatoren skal den da følge den orange roboten nøyaktig.
+
+leftInM := drive.LeftWheelPositionInM;
+rightinM := drive.RightWheelPositionInM;
+
+motion := kinematics.ToBodyMotion(leftDeltaInM := leftInM - lastLeftInM, rightDeltaInM := rightinM - lastRightInM);
+lastLeftInM := leftInM;
+lastRightInM := rightinM;
+
+midHeadingInRad := _pose.thetaInRad + motion.headingChangeInRad / 2.0;
+_pose.x := _pose.x + motion.distanceInM * COS(midHeadingInRad);
+_pose.y := _pose.y + motion.distanceInM * SIN(midHeadingInRad);
+_pose.thetaInRad := _pose.thetaInRad + motion.headingChangeInRad;
+
+IF _pose.thetaInRad > PI THEN
+	_pose.thetaInRad := _pose.thetaInRad - 2.0 * PI;
+ELSIF _pose.thetaInRad <= -PI THEN
+	_pose.thetaInRad := _pose.thetaInRad + 2.0 * PI;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Property Name="Pose" Id="{7cb73c2f-8b0e-5f16-82ed-16a14c60a740}">
@@ -53,5 +69,17 @@ END_VAR]]></Declaration>
         </Implementation>
       </Get>
     </Property>
+    <Method Name="Reset" Id="{eac72228-2ae7-507b-bd27-7b6833793730}">
+      <Declaration><![CDATA[METHOD Reset
+VAR_INPUT
+	pose : Pose2D;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_pose := pose;
+
+lastLeftInM := drive.LeftWheelPositionInM;
+lastRightInM := drive.RightWheelPositionInM;]]></ST>
+      </Implementation>
+    </Method>
   </POU>
 </TcPlcObject>
