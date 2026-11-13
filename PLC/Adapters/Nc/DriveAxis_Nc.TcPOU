@@ -61,7 +61,11 @@ IF ABS(targetInMPerS) < MIN_VELOCITY_IN_M_PER_S THEN
 		moveVelocity(Axis := axis, Execute := FALSE);
 		halt(Axis := axis, Execute := FALSE);
 	END_IF
-	halt(Axis := axis, Execute := TRUE);
+	halt(
+		Axis := axis,
+		Execute := TRUE,
+		Deceleration := Parameters.wheelAccelerationInMPerS2,
+		Jerk := Parameters.wheelJerkInMPerS3);
 ELSIF isHalting OR ABS(targetInMPerS - commandedInMPerS) > VELOCITY_DEADBAND_IN_M_PER_S THEN
 	// MC_MoveVelocity starts on a rising edge, so a new speed needs Execute low, then high.
 	isHalting := FALSE;
@@ -72,6 +76,9 @@ ELSIF isHalting OR ABS(targetInMPerS - commandedInMPerS) > VELOCITY_DEADBAND_IN_
 		Axis := axis,
 		Execute := TRUE,
 		Velocity := ABS(targetInMPerS),
+		Acceleration := Parameters.wheelAccelerationInMPerS2,
+		Deceleration := Parameters.wheelAccelerationInMPerS2,
+		Jerk := Parameters.wheelJerkInMPerS3,
 		Direction := SEL(targetInMPerS > 0, MC_Negative_Direction, MC_Positive_Direction));
 ELSE
 	moveVelocity(Axis := axis, Execute := TRUE);

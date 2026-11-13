@@ -7,6 +7,10 @@ VAR_GLOBAL PERSISTENT
 	// Hjulradien ligger i NC-skaleringen av aksene, som går i meter langs hjulbanen.
 	trackWidthInM : LREAL := 0.40;
 	maxWheelSpeedInMPerS : LREAL := 0.6;
+	// Hvor fort hjulene får endre fart. Uten disse bruker NC sine standardverdier, og hjulene
+	// stopper fra full fart på et par hundredeler, mye brattere enn en ekte robot tåler uten å skli.
+	wheelAccelerationInMPerS2 : LREAL := 1.0;
+	wheelJerkInMPerS3 : LREAL := 10.0;
 	useGyroForHeading : BOOL := FALSE;
 END_VAR]]></Declaration>
   </GVL>
