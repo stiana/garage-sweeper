@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "build": "npm run build --workspace apps/robot-gui",
+    "build": "npm run build --workspace apps/robot-gui && npm run build --workspace apps/robot-server",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

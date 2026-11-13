@@ -8,7 +8,7 @@ En garasjefeiende robot styrt av TwinCAT 3 (4026), uten ROS. Repoet har TwinCAT-
 cd sim
 npm install       # trenger npm 10 eller nyere (følger med Node 22/24)
 npm test          # enhetstester for simulatorkjernen (Vitest)
-npm run build     # lager apps/robot-gui/dist/index.html
+npm run build     # lager apps/robot-gui/dist/index.html og robot-serveren
 ```
 
 Åpne `sim/apps/robot-gui/dist/index.html` i en nettleser. Under utvikling kan `npm run watch --workspace apps/robot-gui` bygge på nytt ved hver endring.
@@ -24,8 +24,7 @@ npm run build     # lager apps/robot-gui/dist/index.html
 ```bash
 cd sim
 npm install
-npm run build                                   # GUI-en
-npm run build --workspace apps/robot-server
+npm run build                                   # GUI-en og serveren
 node apps/robot-server/dist/server.js           # uten PLC, kjør med tastaturet
 node apps/robot-server/dist/server.js --plc     # mot lokal TwinCAT, port 851
 ```
