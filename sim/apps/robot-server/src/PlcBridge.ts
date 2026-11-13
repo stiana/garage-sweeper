@@ -28,22 +28,22 @@ const READ_INTERVAL_IN_MS = 5;
 const LINK_LOG_HEADER = [
   "simTimeInS",
   "plcTimeInNs",
-  "ageInMs",
+  "plcClockOffsetInMs",
   "leftAxisPositionInM",
   "leftAxisVelocityInMPerS",
-  "leftAxisAccelerationInMPerS2",
   "leftWheelPositionInM",
   "leftWheelSetpointInMPerS",
   "rightAxisPositionInM",
   "rightAxisVelocityInMPerS",
-  "rightAxisAccelerationInMPerS2",
   "rightWheelPositionInM",
   "rightWheelSetpointInMPerS",
   "yawRateInRadPerS",
   "trueThetaInRad",
 ];
-/** Two commands further apart than this are not one motion to measure acceleration from. */
-const MAX_ACCELERATION_DT_IN_S = 0.1;
+/** A bigger jump between the PLC and simulator clocks is a pause or restart, not jitter. */
+const CLOCK_JUMP_IN_S = 0.5;
+/** How fast the clock match follows slow drift between the two clocks. */
+const CLOCK_DRIFT_GAIN = 0.002;
 const STATUS_INTERVAL_IN_MS = 100;
 const RECONNECT_DELAY_IN_MS = 2000;
 const STANDING_STILL: TwistJson = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
@@ -59,9 +59,8 @@ export class PlcBridge implements RobotController {
   private latestCommand: PlcCommand | null = null;
   private lastFeedbackTimeInNs: number | null = null;
   /** Simulation time when the latest command arrived, to know how old its axis positions are. */
-  private commandTimeInNs = 0;
-  private leftWheelAccelerationInMPerS2 = 0;
-  private rightWheelAccelerationInMPerS2 = 0;
+  /** Simulator time minus PLC time, for when a command was fresh. */
+  private plcClockOffsetInS: number | null = null;
   private linkLog: string[] | null = null;
   private readonly leftWheel: WheelFollower;
   private readonly rightWheel: WheelFollower;
@@ -129,6 +128,7 @@ export class PlcBridge implements RobotController {
       // The simulation restarted and put the wheels back to 0.
       this.leftWheel.reanchor();
       this.rightWheel.reanchor();
+      this.plcClockOffsetInS = null;
     }
     this.lastFeedbackTimeInNs = feedback.timeInNs;
     this.gyro.add(feedback.timeInNs, feedback.angularRateInRadPerS.z);
@@ -138,28 +138,16 @@ export class PlcBridge implements RobotController {
 
     const command = this.latestCommand;
     if (!this.isConnected || !command) return STOPPED_COMMAND;
-    const ageInS = Math.max(0, (feedback.timeInNs - this.commandTimeInNs) / 1e9);
+    const timeInS = feedback.timeInNs / 1e9;
     // The NC axes are the motors and encoders. The simulated wheels follow them,
     // then the simulator adds what NC cannot know: slip and collisions.
     const result: RobotCommand = {
-      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(
-        command.leftWheelPositionInM,
-        command.leftWheelVelocityInMPerS,
-        this.leftWheelAccelerationInMPerS2,
-        ageInS,
-        feedback.leftWheelAngleInRad,
-      ),
-      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(
-        command.rightWheelPositionInM,
-        command.rightWheelVelocityInMPerS,
-        this.rightWheelAccelerationInMPerS2,
-        ageInS,
-        feedback.rightWheelAngleInRad,
-      ),
+      leftWheelSetpointInRadPerS: this.leftWheel.velocityInRadPerS(timeInS, feedback.leftWheelAngleInRad),
+      rightWheelSetpointInRadPerS: this.rightWheel.velocityInRadPerS(timeInS, feedback.rightWheelAngleInRad),
       isDriveEnabled: command.isLeftDriveEnabled && command.isRightDriveEnabled,
       isLidarPowered: command.isLidarPowered,
     };
-    this.linkLog?.push(this.linkLogRow(feedback, command, ageInS, result));
+    this.linkLog?.push(this.linkLogRow(feedback, command, result));
     return result;
   }
 
@@ -175,20 +163,18 @@ export class PlcBridge implements RobotController {
     return log;
   }
 
-  private linkLogRow(feedback: RobotFeedback, command: PlcCommand, ageInS: number, result: RobotCommand): string {
+  private linkLogRow(feedback: RobotFeedback, command: PlcCommand, result: RobotCommand): string {
     const r = this.wheelRadiusInM;
     return [
       (feedback.timeInNs / 1e9).toFixed(3),
       String(command.plcTimeInNs),
-      (ageInS * 1000).toFixed(1),
+      ((this.plcClockOffsetInS ?? 0) * 1000).toFixed(1),
       command.leftWheelPositionInM.toFixed(6),
       command.leftWheelVelocityInMPerS.toFixed(5),
-      this.leftWheelAccelerationInMPerS2.toFixed(4),
       (feedback.leftWheelAngleInRad * r).toFixed(6),
       (result.leftWheelSetpointInRadPerS * r).toFixed(5),
       command.rightWheelPositionInM.toFixed(6),
       command.rightWheelVelocityInMPerS.toFixed(5),
-      this.rightWheelAccelerationInMPerS2.toFixed(4),
       (feedback.rightWheelAngleInRad * r).toFixed(6),
       (result.rightWheelSetpointInRadPerS * r).toFixed(5),
       feedback.angularRateInRadPerS.z.toFixed(6),
@@ -250,22 +236,30 @@ export class PlcBridge implements RobotController {
 
   /**
    * The read loop is faster than the PLC task, so the same command often comes twice.
-   * Only a new PLC cycle restarts its age, and the wheel accelerations are measured
-   * between two cycles on the PLC's own clock.
+   * Each new PLC cycle gives the wheels one more point of the path NC drove, placed on
+   * the simulator's clock. The two clocks are matched by the freshest command seen: the
+   * smallest difference between them, which then follows slow drift.
    */
   private takeCommand(command: PlcCommand): void {
     const previous = this.latestCommand;
     this.latestCommand = command;
     if (previous && command.plcTimeInNs === previous.plcTimeInNs) return;
-    this.commandTimeInNs = this.lastFeedbackTimeInNs ?? 0;
-    const dtInS = previous ? Number(BigInt(command.plcTimeInNs) - BigInt(previous.plcTimeInNs)) / 1e9 : 0;
-    if (dtInS > 0 && dtInS < MAX_ACCELERATION_DT_IN_S) {
-      this.leftWheelAccelerationInMPerS2 = (command.leftWheelVelocityInMPerS - previous!.leftWheelVelocityInMPerS) / dtInS;
-      this.rightWheelAccelerationInMPerS2 = (command.rightWheelVelocityInMPerS - previous!.rightWheelVelocityInMPerS) / dtInS;
+    if (this.lastFeedbackTimeInNs === null) return;
+    const plcTimeInS = Number(BigInt(command.plcTimeInNs) / 1000n) / 1e6;
+    const offsetInS = this.lastFeedbackTimeInNs / 1e9 - plcTimeInS;
+    const known = this.plcClockOffsetInS;
+    if (known === null || offsetInS < known || offsetInS - known > CLOCK_JUMP_IN_S) {
+      if (known !== null && offsetInS - known > CLOCK_JUMP_IN_S) {
+        this.leftWheel.reanchor();
+        this.rightWheel.reanchor();
+      }
+      this.plcClockOffsetInS = offsetInS;
     } else {
-      this.leftWheelAccelerationInMPerS2 = 0;
-      this.rightWheelAccelerationInMPerS2 = 0;
+      this.plcClockOffsetInS = known + CLOCK_DRIFT_GAIN * (offsetInS - known);
     }
+    const timeInS = plcTimeInS + this.plcClockOffsetInS;
+    this.leftWheel.addSample(timeInS, command.leftWheelPositionInM);
+    this.rightWheel.addSample(timeInS, command.rightWheelPositionInM);
   }
 
   private async flush(): Promise<void> {
