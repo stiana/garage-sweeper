@@ -1,5 +1,5 @@
 import type { BodyCondition, ErrorSample, HitMap, Pose2D, RobotView, World, WorldDefinition } from "@garage/sim-core";
-import type { HmiCommandCode, HmiStatusJson, TestRouteMessage } from "@garage/gui-protocol";
+import type { GyroCalibrationMessage, HmiCommandCode, HmiStatusJson, TestRouteMessage } from "@garage/gui-protocol";
 
 /** Sensor values for the readouts, the same whether the robot runs here or on the server. */
 export interface Telemetry {
@@ -52,6 +52,8 @@ export interface Backend {
   sendHmi(code: HmiCommandCode): void;
   /** Starts the test route, or stops it if it is running. */
   toggleTestRoute(): void;
+  /** Starts the gyro calibration spin, or stops it if it is running. */
+  toggleGyroCalibration(): void;
 
   /** Called when someone else changed the world, so the GUI can refit and drop its selection. */
   onWorldReplaced: () => void;
@@ -59,4 +61,6 @@ export interface Backend {
   onConnectionChanged: (message: string) => void;
   /** Called when the test route starts, stops or finishes. */
   onTestRoute: (message: TestRouteMessage) => void;
+  /** Called when the gyro calibration starts, stops or finishes. */
+  onGyroCalibration: (message: GyroCalibrationMessage) => void;
 }

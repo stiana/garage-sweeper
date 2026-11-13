@@ -13,7 +13,8 @@ import {
 } from "@garage/sim-core";
 import type { ClientMessage, ServerMessage, StateMessage, TestRouteResult, TwistJson } from "@garage/gui-protocol";
 import type { PlcBridge } from "./PlcBridge";
-import { TestRoute } from "./TestRoute";
+import { GyroCalibration } from "./GyroCalibration";
+import { TestRoute, spinRoute } from "./TestRoute";
 
 export interface RobotServerOptions {
   port: number;
@@ -34,7 +35,10 @@ const TEST_ROUTE_SAMPLE_IN_S = 0.25;
 const STOPPED: TwistJson = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
 
 interface TestRouteRun {
+  kind: "testRoute" | "gyroCalibration";
   route: TestRoute;
+  /** Only for the gyro calibration. */
+  calibration: GyroCalibration | null;
   startInS: number;
   nextSampleInS: number;
   collisionsAtStart: number;
@@ -147,8 +151,10 @@ export class RobotServer {
         void plc?.sendHmi(message.code);
         break;
       case "testRoute":
+      case "gyroCalibration":
+        // One drive at a time: either button stops whichever is running.
         if (this.testRoute) this.cancelTestRoute();
-        else this.startTestRoute();
+        else this.startTestRoute(message.type);
         break;
     }
   }
@@ -162,17 +168,19 @@ export class RobotServer {
 
   // ---- Test route ---------------------------------------------------------
 
-  private startTestRoute(): void {
+  private startTestRoute(kind: TestRouteRun["kind"]): void {
     const { source, simulation, plc } = this.options;
     source.realign();
     void plc?.setPose(simulation.truePose);
-    plc?.startLinkLog();
-    const route = new TestRoute();
+    if (kind === "testRoute") plc?.startLinkLog();
+    const route = kind === "testRoute" ? new TestRoute() : new TestRoute(spinRoute());
     const estimateIds = source.view.estimates.map((e) => ({ id: e.id, label: e.label }));
     const header = ["timeInS", "trueX", "trueY", "trueThetaInRad"];
     for (const { id } of estimateIds) header.push(`${id}X`, `${id}Y`, `${id}ThetaInRad`, `${id}ErrorInM`, `${id}HeadingErrorInDeg`);
     this.testRoute = {
+      kind,
       route,
+      calibration: kind === "gyroCalibration" ? new GyroCalibration() : null,
       startInS: source.view.timeInS,
       nextSampleInS: 0,
       collisionsAtStart: source.collisionCount,
@@ -181,15 +189,17 @@ export class RobotServer {
       estimateIds,
       rows: [header.join(",")],
     };
-    this.broadcast({ type: "testRoute", state: "started", durationInS: route.durationInS });
-    console.log(`Testløype startet (${route.durationInS.toFixed(0)} s, støy: ${this.noiseId}).`);
+    this.broadcast({ type: kind, state: "started", durationInS: route.durationInS });
+    const name = kind === "testRoute" ? "Testløype" : "Gyrokalibrering";
+    console.log(`${name} startet (${route.durationInS.toFixed(0)} s, støy: ${this.noiseId}).`);
   }
 
   private cancelTestRoute(): void {
+    const kind = this.testRoute?.kind ?? "testRoute";
     this.testRoute = null;
     this.options.plc?.takeLinkLog();
     this.drive(STOPPED);
-    this.broadcast({ type: "testRoute", state: "cancelled" });
+    this.broadcast({ type: kind, state: "cancelled" });
   }
 
   private async driveTestRoute(): Promise<void> {
@@ -205,6 +215,11 @@ export class RobotServer {
     const truth = simulation.truePose;
     run.distanceInM += truth.distanceTo(run.lastPose);
     run.lastPose = truth;
+    run.calibration?.sample(
+      elapsedInS,
+      truth.thetaInRad,
+      source.view.estimates.map((e) => ({ id: e.id, label: e.label, thetaInRad: e.pose.thetaInRad })),
+    );
     if (elapsedInS >= run.nextSampleInS) {
       run.nextSampleInS += TEST_ROUTE_SAMPLE_IN_S;
       run.rows.push(this.sampleRow(run, elapsedInS).join(","));
@@ -216,7 +231,8 @@ export class RobotServer {
     }
     this.testRoute = null;
     this.drive(STOPPED);
-    await this.finishTestRoute(run, elapsedInS);
+    if (run.calibration) this.finishGyroCalibration(run.calibration);
+    else await this.finishTestRoute(run, elapsedInS);
   }
 
   private sampleRow(run: TestRouteRun, elapsedInS: number): string[] {
@@ -241,6 +257,15 @@ export class RobotServer {
         headingErrorInDeg: pose ? Math.abs(normalizeAngle(pose.thetaInRad - truth.thetaInRad)) * 180 / Math.PI : NaN,
       };
     });
+  }
+
+  private finishGyroCalibration(calibration: GyroCalibration): void {
+    const results = calibration.results();
+    console.log("Gyrokalibrering ferdig. Gang skalaen med:");
+    for (const r of results) {
+      console.log(`  ${r.label}: ${r.factor.toFixed(4)} (mot klokka ${r.counterClockwiseFactor.toFixed(4)}, med klokka ${r.clockwiseFactor.toFixed(4)})`);
+    }
+    this.broadcast({ type: "gyroCalibration", state: "done", results });
   }
 
   private async finishTestRoute(run: TestRouteRun, elapsedInS: number): Promise<void> {

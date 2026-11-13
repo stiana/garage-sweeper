@@ -136,7 +136,7 @@ summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; 
 .field label { color: var(--muted); font-size: 13px; }
 .field output { font: 12px var(--font-data); color: var(--muted); margin-left: 6px; }
 .note { color: var(--muted); font-size: 12.5px; margin: 0; }
-.test-route-result { white-space: pre-line; }
+.test-route-result, .gyro-calibration-result { white-space: pre-line; }
 kbd { font: 11px var(--font-data); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; background: var(--bg); }
 
 button, select, input, textarea { font: inherit; color: var(--ink); }
@@ -382,6 +382,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <button type="button" id="test-route">Kjør testløype</button>
         </div>
         <p class="note only-server test-route-result" id="test-route-result">Står stille 10 s, så tre runder i en firkant på 1 × 1 m (venstresving) fra der roboten står. Sørg for at det er fri plass foran og til venstre.</p>
+        <div class="row only-server">
+          <button type="button" id="gyro-calibration">Kalibrer gyro</button>
+        </div>
+        <p class="note only-server gyro-calibration-result" id="gyro-calibration-result">Står stille 10 s, snurrer så 10 runder mot klokka og 10 med klokka på stedet. Viser hvor mye hvert estimat må skaleres for å treffe den sanne vinkelen.</p>
         <p class="note">Mens roboten er løftet, går hjulene rundt uten at den flytter seg. Se hvordan odometrien løper av gårde, og hvordan akselerometeret avslører det.</p>
       </div>
     </details>

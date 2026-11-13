@@ -12,6 +12,9 @@ VAR_GLOBAL PERSISTENT
 	wheelAccelerationInMPerS2 : LREAL := 1.0;
 	wheelJerkInMPerS3 : LREAL := 10.0;
 	useGyroForHeading : BOOL := FALSE;
+	// Gyroens skalafaktor: GyroOdometry ganger målt rotasjon (etter bias) med denne.
+	// Finn den med «Kalibrer gyro» i GUI-en, og gang den gamle verdien med faktoren den viser.
+	gyroScale : LREAL := 1.0;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

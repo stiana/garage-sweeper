@@ -15,6 +15,7 @@ import type {
   ServerMessage,
   StateMessage,
   TestRouteMessage,
+  GyroCalibrationMessage,
   TwistJson,
 } from "@garage/gui-protocol";
 import type { KeyboardController } from "../input/KeyboardController";
@@ -43,6 +44,7 @@ export class RemoteBackend implements Backend {
   onWorldReplaced = () => {};
   onConnectionChanged = (_message: string) => {};
   onTestRoute = (_message: TestRouteMessage) => {};
+  onGyroCalibration = (_message: GyroCalibrationMessage) => {};
 
   private socket: WebSocket | null = null;
   private state: StateMessage | null = null;
@@ -128,6 +130,7 @@ export class RemoteBackend implements Backend {
   kidnap(pose: Pose2D): void { this.send({ type: "kidnap", pose: { x: pose.x, y: pose.y, thetaInRad: pose.thetaInRad } }); }
   sendHmi(code: HmiCommandCode): void { this.send({ type: "hmi", code }); }
   toggleTestRoute(): void { this.send({ type: "testRoute" }); }
+  toggleGyroCalibration(): void { this.send({ type: "gyroCalibration" }); }
 
   private connect(): void {
     const socket = new WebSocket(this.url);
@@ -156,6 +159,9 @@ export class RemoteBackend implements Backend {
         break;
       case "testRoute":
         this.onTestRoute(message);
+        break;
+      case "gyroCalibration":
+        this.onGyroCalibration(message);
         break;
     }
   }
