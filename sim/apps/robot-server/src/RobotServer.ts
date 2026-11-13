@@ -11,7 +11,7 @@ import {
   type World,
   normalizeAngle,
 } from "@garage/sim-core";
-import type { ClientMessage, ServerMessage, StateMessage, TestRouteResult, TwistJson } from "@garage/gui-protocol";
+import type { ClientMessage, MissionStateName, ServerMessage, StateMessage, TestRouteResult, TwistJson } from "@garage/gui-protocol";
 import type { PlcBridge } from "./PlcBridge";
 import { GyroCalibration } from "./GyroCalibration";
 import { TestRoute, spinRoute } from "./TestRoute";
@@ -71,6 +71,7 @@ export class RobotServer {
         response.writeHead(500).end("Fant ikke GUI-en. Kjør npm run build i sim/ først.");
       }
     });
+    if (options.plc) options.plc.onMap = (map) => this.broadcast(map);
     const wss = new WebSocketServer({ server: this.http, path: "/ws" });
     wss.on("connection", (socket) => this.connect(socket));
   }
@@ -101,6 +102,8 @@ export class RobotServer {
       lidarId: this.lidarId,
       seed: this.options.simulation.seed,
     });
+    const map = this.options.plc?.map;
+    if (map) this.send(socket, map);
   }
 
   private handle(message: ClientMessage, from: WebSocket): void {
@@ -162,7 +165,7 @@ export class RobotServer {
   private drive(twist: TwistJson): void {
     const { plc } = this.options;
     if (!plc) this.options.setManualTwist(twist);
-    else if (plc.status?.missionState !== "MANUAL" && isMoving(twist)) void plc.sendHmi("MANUAL_DRIVE", twist);
+    else if (!canDriveByHand(plc.status?.missionState) && isMoving(twist)) void plc.sendHmi("MANUAL_DRIVE", twist);
     else void plc.sendManualTwist(twist);
   }
 
@@ -338,6 +341,12 @@ function pose(p: Pose2D) {
 
 function fixed(value: number | undefined): string {
   return value === undefined || Number.isNaN(value) ? "" : value.toFixed(4);
+}
+
+/** States where the arrow keys steer the robot without first switching the PLC to manual. */
+function canDriveByHand(state: MissionStateName | undefined): boolean {
+  // Until the robot explores by itself (M5), you drive it while it maps.
+  return state === "MANUAL" || state === "MAPPING";
 }
 
 function isMoving(twist: TwistJson): boolean {

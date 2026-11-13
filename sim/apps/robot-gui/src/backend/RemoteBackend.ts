@@ -16,6 +16,7 @@ import type {
   StateMessage,
   TestRouteMessage,
   GyroCalibrationMessage,
+  PlcMapMessage,
   TwistJson,
 } from "@garage/gui-protocol";
 import type { KeyboardController } from "../input/KeyboardController";
@@ -41,6 +42,7 @@ export class RemoteBackend implements Backend {
   isPaused = false;
   speedFactor = 1;
   plc: PlcView | null = null;
+  plcMap: PlcMapMessage | null = null;
   onWorldReplaced = () => {};
   onConnectionChanged = (_message: string) => {};
   onTestRoute = (_message: TestRouteMessage) => {};
@@ -162,6 +164,9 @@ export class RemoteBackend implements Backend {
         break;
       case "gyroCalibration":
         this.onGyroCalibration(message);
+        break;
+      case "plcMap":
+        this.plcMap = message;
         break;
     }
   }

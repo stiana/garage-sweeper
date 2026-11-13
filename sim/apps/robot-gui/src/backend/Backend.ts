@@ -1,5 +1,5 @@
 import type { BodyCondition, ErrorSample, HitMap, Pose2D, RobotView, World, WorldDefinition } from "@garage/sim-core";
-import type { GyroCalibrationMessage, HmiCommandCode, HmiStatusJson, TestRouteMessage } from "@garage/gui-protocol";
+import type { GyroCalibrationMessage, HmiCommandCode, HmiStatusJson, PlcMapMessage, TestRouteMessage } from "@garage/gui-protocol";
 
 /** Sensor values for the readouts, the same whether the robot runs here or on the server. */
 export interface Telemetry {
@@ -33,6 +33,8 @@ export interface Backend {
   readonly history: ErrorSample[];
   readonly telemetry: Telemetry;
   readonly plc: PlcView | null;
+  /** The map the PLC builds while mapping. Null without a PLC or before its first map. */
+  readonly plcMap: PlcMapMessage | null;
   readonly canPause: boolean;
   /** Only the robot server can drive the test route. */
   readonly canRunTestRoute: boolean;

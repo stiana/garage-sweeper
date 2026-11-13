@@ -94,12 +94,31 @@ export type GyroCalibrationMessage =
   | { type: "gyroCalibration"; state: "cancelled" }
   | { type: "gyroCalibration"; state: "done"; results: GyroCalibrationResult[] };
 
+/**
+ * The occupancy grid the PLC builds while mapping (RobotHmi.mapInfo and RobotHmi.mapCells).
+ * One signed byte per cell, in units of logOddsPerUnit: 0 is unknown, positive is occupied
+ * and negative is free. Cell [x, y] is at index x * heightInCells + y, as in the PLC's memory,
+ * and covers the world from origin + (x, y) * cellSizeInM.
+ */
+export interface PlcMapMessage {
+  type: "plcMap";
+  revision: number;
+  cellSizeInM: number;
+  originXInM: number;
+  originYInM: number;
+  widthInCells: number;
+  heightInCells: number;
+  logOddsPerUnit: number;
+  cellsBase64: string;
+}
+
 export type ServerMessage =
   | { type: "hello"; mode: "standalone" | "plc"; world: WorldDefinition; noiseId: string; lidarId: string; seed: number }
   | { type: "world"; world: WorldDefinition }
   | StateMessage
   | TestRouteMessage
-  | GyroCalibrationMessage;
+  | GyroCalibrationMessage
+  | PlcMapMessage;
 
 export type ClientMessage =
   | { type: "world"; world: WorldDefinition }

@@ -359,9 +359,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <button type="button" id="scan-at-estimate" aria-pressed="false">LIDAR ved estimat</button>
           <button type="button" id="show-hitmap" aria-pressed="false">Vis treffkart</button>
           <button type="button" id="clear-hitmap">Tøm treffkart</button>
+          <button type="button" id="show-plc-map" aria-pressed="true" hidden>Vis PLC-kart</button>
         </div>
         <p class="note">LIDAR-punktene tegnes ved sann posisjon. Med «LIDAR ved estimat» tegnes de der roboten tror den er (hjul + gyro), så du ser hvor mye skannet bommer når odometrien har drevet. Et skann tegnes når en hel runde er ferdig, og blir vridd når roboten svinger, akkurat som på en ekte LIDAR.</p>
         <p class="note">Treffkartet samler alle treff ved estimatet. Når odometrien driver, blir veggene utydelige. Det er dette scan matching skal løse.</p>
+        <p class="note">PLC-kartet er kartet PLC-en bygger mens den kartlegger: mørke ruter er opptatt, grønne er frie. «Start kartlegging» tømmer det, og så kjører du roboten med piltastene.</p>
       </div>
     </details>
 

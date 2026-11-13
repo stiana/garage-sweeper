@@ -21,6 +21,7 @@ VAR
 	drive : DiffDrive;
 	odometry : WheelOdometry;
 	gyroOdometry : GyroOdometry;
+	grid : OccupancyGrid;
 	mission : SweepMission;
 
 	scan : LaserScan;
@@ -42,9 +43,10 @@ IF Parameters.platform = PlatformKind.SIMULATION THEN
 END_IF
 
 lidar.Execute();
-IF lidar.TryGetScan(scan) THEN
-	// Kommer i M3 og M4: kartoppdatering og scan matching.
-	;
+IF lidar.TryGetScan(scan) AND mission.State = MissionState.MAPPING THEN
+	// Kommer i M4: scan matching, som retter posisjonen mot kartet før scannet legges inn.
+	grid.Integrate(scan := scan, pose := EstimatedPose());
+	grid.Publish(RobotHmi.mapInfo, RobotHmi.mapCells);
 END_IF
 
 odometry.Execute();
@@ -53,6 +55,10 @@ mission.Execute();
 IF mission.TryTakePoseRequest(requestedPose) THEN
 	odometry.Reset(requestedPose);
 	gyroOdometry.Reset(requestedPose);
+END_IF
+IF mission.TryTakeMapClearRequest() THEN
+	grid.Clear();
+	grid.Publish(RobotHmi.mapInfo, RobotHmi.mapCells);
 END_IF
 
 IF mission.ShouldDrive THEN
@@ -95,6 +101,8 @@ odometry.Connect(drive);
 odometry.Reset(start);
 gyroOdometry.Connect(drive, gyro);
 gyroOdometry.Reset(start);
+grid.Clear();
+grid.Publish(RobotHmi.mapInfo, RobotHmi.mapCells);
 isInitialized := TRUE;]]></ST>
       </Implementation>
     </Method>
@@ -118,17 +126,23 @@ VAR
 	estimate : Pose2D;
 END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF Parameters.useGyroForHeading THEN
-	estimate := gyroOdometry.Pose;
-ELSE
-	estimate := odometry.Pose;
-END_IF
-
+        <ST><![CDATA[estimate := EstimatedPose();
 lidarError := lidar.Error;
 RobotHmi.status.estimatedPose := estimate;
 RobotHmi.status.isSimulatorConnected := simulator.IsConnected;
 RobotHmi.status.isLidarOk := NOT lidarError.isActive;
 SimulatorIo.command.estimatedPose := estimate;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="EstimatedPose" Id="{48955eaf-a64d-4d39-9aef-cb4fddd6faa5}">
+      <Declaration><![CDATA[// Den posisjonen roboten tror den har, fra estimatet Parameters.useGyroForHeading velger.
+METHOD PRIVATE EstimatedPose : Pose2D]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Parameters.useGyroForHeading THEN
+	EstimatedPose := gyroOdometry.Pose;
+ELSE
+	EstimatedPose := odometry.Pose;
+END_IF]]></ST>
       </Implementation>
     </Method>
   </POU>

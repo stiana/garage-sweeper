@@ -53,6 +53,9 @@
     <Compile Include="Contracts\HmiStatus.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Contracts\MapInfo.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Contracts\MissionState.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -125,6 +128,12 @@
     <Compile Include="Localization\WheelOdometry.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Mapping\GridCell.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Mapping\OccupancyGrid.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Mission\SweepMission.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -147,6 +156,7 @@
     <Folder Include="Core" />
     <Folder Include="Hal" />
     <Folder Include="Localization" />
+    <Folder Include="Mapping" />
     <Folder Include="Mission" />
     <Folder Include="Platform" />
   </ItemGroup>

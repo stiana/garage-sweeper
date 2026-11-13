@@ -5,6 +5,9 @@
 VAR_GLOBAL
 	command : HmiCommand;
 	status : HmiStatus;
+	// Kartet PLC-en bygger, for GUI-en. Indeksen er [x, y]; y endrer seg raskest i minnet.
+	mapInfo : MapInfo;
+	mapCells : ARRAY[0..Constants.MAP_WIDTH_IN_CELLS - 1, 0..Constants.MAP_HEIGHT_IN_CELLS - 1] OF SINT;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

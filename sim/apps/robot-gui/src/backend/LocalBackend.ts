@@ -8,6 +8,7 @@ export class LocalBackend implements Backend {
   readonly mode = "local" as const;
   readonly world: World;
   readonly plc = null;
+  readonly plcMap = null;
   readonly canPause = true;
   readonly canRunTestRoute = false;
   private readonly simulation: Simulation;
