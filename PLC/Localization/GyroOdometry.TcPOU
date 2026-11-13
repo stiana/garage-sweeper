@@ -48,6 +48,9 @@ motion := kinematics.ToBodyMotion(leftDeltaInM := leftInM - lastLeftInM, rightDe
 lastLeftInM := leftInM;
 lastRightInM := rightInM;
 
+
+// (rate − bias) * Parameters.gyroScale
+
 standStillTimer(IN := drive.IsStandingStill, PT := T#500MS);
 // Kursendring fra gyroen, bare når det har kommet en ny måling
 IF gyro.IsValid AND gyro.TimestampInNs <> lastGyroTimestampInNs THEN
@@ -55,7 +58,7 @@ IF gyro.IsValid AND gyro.TimestampInNs <> lastGyroTimestampInNs THEN
 		dtInS := ULINT_TO_LREAL(gyro.TimestampInNs - lastGyroTimestampInNs) * 1E-9;
 	END_IF
 	IF dtInS > 0 AND dtInS < 0.5 THEN
-		headingChangeInRad := (gyro.YawRateInRadPerS - gyroBiasInRadPerS) * dtInS;
+		headingChangeInRad := (gyro.YawRateInRadPerS - gyroBiasInRadPerS) * Parameters.gyroScale * dtInS;
 	END_IF
 	
 	IF standStillTimer.Q THEN
