@@ -15,6 +15,7 @@ export class LocalBackend implements Backend {
   onWorldReplaced = () => {};
   onConnectionChanged = (_message: string) => {};
   onTestRoute = () => {};
+  onGyroCalibration = () => {};
 
   constructor(definition: WorldDefinition, controller: KeyboardController) {
     this.world = new World(definition);
@@ -81,4 +82,5 @@ export class LocalBackend implements Backend {
   kidnap(pose: Pose2D): void { this.simulation.kidnap(pose); }
   sendHmi(): void {}
   toggleTestRoute(): void {}
+  toggleGyroCalibration(): void {}
 }

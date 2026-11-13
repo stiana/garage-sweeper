@@ -34,6 +34,8 @@ node apps/robot-server/dist/server.js --plc     # mot lokal TwinCAT, port 851
 
 **Testløype:** knappen *Kjør testløype* (under feilene) setter estimatene til sann posisjon, står stille i 10 s og kjører så tre runder i en firkant på 1 × 1 m med venstresving fra der roboten står. Kjøringen går gjennom PLC-en når den er koblet til. Etterpå vises sluttfeilen for hvert estimat, og hele forløpet lagres som CSV i `runs/` under mappen serveren ble startet fra. Ruta kjøres uten tilbakekobling, så hjørnene blir ikke eksakte, men alle kjøringer blir like. Da kan du sammenligne algoritmer og støyprofiler.
 
+**Gyrokalibrering:** knappen *Kalibrer gyro* står stille i 10 s og snurrer så 10 runder mot klokka og 10 med klokka på stedet. Etterpå viser den for hvert estimat hvor mye den målte vinkelen må skaleres for å treffe den sanne, for begge retninger og i snitt. For PLC-estimatet ganger du `Parameters.gyroScale` med snittfaktoren (estimatet bruker gyroen når `Parameters.useGyroForHeading` er TRUE). Ulik faktor i de to retningene tyder på noe annet enn skalafeil.
+
 ## PLC
 
 PLC-prosjektet heter `PLC` og ligger i `PLC/`. Koden er ordnet etter lag: `Core`, `Contracts`, `Hal`, `Platform`, `Localization`, `Mission`, `Adapters` og `App`. Rediger i XAE som vanlig. Endringer fra Claude kommer som pull requests mot de samme `.TcPOU`-filene. PLC-tasken går på 10 ms.

@@ -77,11 +77,29 @@ export type TestRouteMessage =
   | { type: "testRoute"; state: "cancelled" }
   | { type: "testRoute"; state: "done"; results: TestRouteResult[]; distanceInM: number; collisions: number; file: string };
 
+/** How much one estimate's turning must be scaled to match the true turning during the gyro calibration spin. */
+export interface GyroCalibrationResult {
+  id: string;
+  label: string;
+  /** How far the robot really turned each way, for reference. */
+  trueTurnInDeg: number;
+  /** True turn divided by the estimated turn, for each direction and on average. */
+  counterClockwiseFactor: number;
+  clockwiseFactor: number;
+  factor: number;
+}
+
+export type GyroCalibrationMessage =
+  | { type: "gyroCalibration"; state: "started"; durationInS: number }
+  | { type: "gyroCalibration"; state: "cancelled" }
+  | { type: "gyroCalibration"; state: "done"; results: GyroCalibrationResult[] };
+
 export type ServerMessage =
   | { type: "hello"; mode: "standalone" | "plc"; world: WorldDefinition; noiseId: string; lidarId: string; seed: number }
   | { type: "world"; world: WorldDefinition }
   | StateMessage
-  | TestRouteMessage;
+  | TestRouteMessage
+  | GyroCalibrationMessage;
 
 export type ClientMessage =
   | { type: "world"; world: WorldDefinition }
@@ -95,4 +113,6 @@ export type ClientMessage =
   | { type: "drive"; twist: TwistJson }
   | { type: "hmi"; code: HmiCommandCode }
   /** Starts the test route, or stops it if it is running. */
-  | { type: "testRoute" };
+  | { type: "testRoute" }
+  /** Starts the gyro calibration spin, or stops it if it is running. */
+  | { type: "gyroCalibration" };

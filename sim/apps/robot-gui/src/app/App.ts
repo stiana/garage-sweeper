@@ -1,5 +1,5 @@
 import { Vec2, type BodyCondition, type PlacedShape, type PoseEstimate, type World, type WorldDefinition } from "@garage/sim-core";
-import type { HmiCommandCode, TestRouteMessage } from "@garage/gui-protocol";
+import type { GyroCalibrationMessage, HmiCommandCode, TestRouteMessage } from "@garage/gui-protocol";
 import type { Backend } from "../backend/Backend";
 import { LocalBackend } from "../backend/LocalBackend";
 import { RemoteBackend } from "../backend/RemoteBackend";
@@ -41,6 +41,7 @@ export class App {
     };
     this.backend.onConnectionChanged = (message) => this.say(message);
     this.backend.onTestRoute = (message) => this.showTestRoute(message);
+    this.backend.onGyroCalibration = (message) => this.showGyroCalibration(message);
     const canvas = byId<HTMLCanvasElement>("view");
     this.renderer = new Renderer(canvas, this.camera);
     this.plot = new ErrorPlot(byId<HTMLCanvasElement>("error-plot"));
@@ -192,6 +193,34 @@ export class App {
       this.backend.hitMap.clear();
     });
     byId("test-route").addEventListener("click", () => this.backend.toggleTestRoute());
+    byId("gyro-calibration").addEventListener("click", () => this.backend.toggleGyroCalibration());
+  }
+
+  private showGyroCalibration(message: GyroCalibrationMessage): void {
+    const button = byId("gyro-calibration");
+    const result = byId("gyro-calibration-result");
+    const number = (value: number, digits: number) => value.toLocaleString("nb-NO", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    switch (message.state) {
+      case "started":
+        button.textContent = "Stopp kalibreringen";
+        result.textContent = `Kalibrerer, cirka ${number(message.durationInS, 0)} s. Ikke kjør selv mens den går.`;
+        break;
+      case "cancelled":
+        button.textContent = "Kalibrer gyro";
+        result.textContent = "Kalibreringen ble avbrutt.";
+        break;
+      case "done": {
+        button.textContent = "Kalibrer gyro";
+        const turned = message.results[0]?.trueTurnInDeg ?? 0;
+        const lines = message.results.map(
+          (r) => `${r.label}: × ${number(r.factor, 4)} (mot klokka ${number(r.counterClockwiseFactor, 4)}, med klokka ${number(r.clockwiseFactor, 4)})`,
+        );
+        result.textContent =
+          `Roboten snudde ${number(turned, 0)}° hver vei. Gang skalaen med faktoren:\n${lines.join("\n")}\n` +
+          "PLC-estimatet bruker gyroen bare når Parameters.useGyroForHeading er TRUE.";
+        break;
+      }
+    }
   }
 
   private showTestRoute(message: TestRouteMessage): void {
