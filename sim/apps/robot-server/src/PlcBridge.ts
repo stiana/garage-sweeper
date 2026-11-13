@@ -11,7 +11,15 @@ import {
 } from "@garage/sim-core";
 import { GyroAverager } from "./GyroAverager";
 import { WheelFollower } from "./WheelFollower";
-import { HMI_COMMAND_CODES, type HmiCommandCode, type HmiStatusJson, MISSION_STATES, type PoseJson, type TwistJson } from "@garage/gui-protocol";
+import {
+  HMI_COMMAND_CODES,
+  type HmiCommandCode,
+  type HmiStatusJson,
+  MISSION_STATES,
+  type PlcMapMessage,
+  type PoseJson,
+  type TwistJson,
+} from "@garage/gui-protocol";
 
 export interface PlcConnectionSettings {
   /** AmsNetId of the TwinCAT runtime. "localhost" when it runs on this PC. */
@@ -45,6 +53,8 @@ const CLOCK_JUMP_IN_S = 0.5;
 /** How fast the clock match follows slow drift between the two clocks. */
 const CLOCK_DRIFT_GAIN = 0.002;
 const STATUS_INTERVAL_IN_MS = 100;
+/** The map changes once per scan at most; the cells are 64 kB, so they are only read when the revision moved. */
+const MAP_INTERVAL_IN_MS = 500;
 const RECONNECT_DELAY_IN_MS = 2000;
 const STANDING_STILL: TwistJson = { forwardSpeedInMPerS: 0, yawRateInRadPerS: 0 };
 const ORIGIN: PoseJson = { x: 0, y: 0, thetaInRad: 0 };
@@ -71,11 +81,16 @@ export class PlcBridge implements RobotController {
   private isWriting = false;
   private hmiSequence = 0;
   private lastStatusReadInMs = 0;
+  private lastMapReadInMs = 0;
   private running = false;
   isConnected = false;
   /** Called each time the link to the PLC is up, after a start or a reconnect. */
   onConnected = () => {};
   status: HmiStatusJson | null = null;
+  /** The PLC's latest map, or null before it has sent one. */
+  map: PlcMapMessage | null = null;
+  /** Called each time the PLC's map has changed. */
+  onMap = (_map: PlcMapMessage) => {};
   lastError = "";
 
   /** wheelRadiusInM: the true wheel radius of the simulated robot, from config/robot.json. */
@@ -230,8 +245,20 @@ export class PlcBridge implements RobotController {
         const status = (await this.client.readValue<PlcStatus>("RobotHmi.status")).value;
         this.status = { ...status, missionState: MISSION_STATES[status.missionState] ?? "IDLE" };
       }
+      if (now - this.lastMapReadInMs > MAP_INTERVAL_IN_MS) {
+        this.lastMapReadInMs = now;
+        await this.readMap();
+      }
       await sleep(READ_INTERVAL_IN_MS);
     }
+  }
+
+  private async readMap(): Promise<void> {
+    const info = (await this.client.readValue<PlcMapInfo>("RobotHmi.mapInfo")).value;
+    if (info.widthInCells === 0 || info.revision === this.map?.revision) return;
+    const cells = await this.client.readRawByPath("RobotHmi.mapCells");
+    this.map = toPlcMapMessage(info, cells);
+    this.onMap(this.map);
   }
 
   /**
@@ -294,6 +321,35 @@ interface PlcCommand {
   isRightDriveEnabled: boolean;
   isLidarPowered: boolean;
   estimatedPose: { x: number; y: number; thetaInRad: number };
+}
+
+interface PlcMapInfo {
+  revision: number;
+  cellSizeInM: number;
+  originXInM: number;
+  originYInM: number;
+  widthInCells: number;
+  heightInCells: number;
+  logOddsPerUnit: number;
+}
+
+/** Packs the PLC's map for the GUI. The bytes keep the PLC's layout, see PlcMapMessage. */
+export function toPlcMapMessage(info: PlcMapInfo, cells: Uint8Array): PlcMapMessage {
+  const expected = info.widthInCells * info.heightInCells;
+  if (cells.length !== expected) {
+    throw new Error(`RobotHmi.mapCells har ${cells.length} byte, mapInfo sier ${info.widthInCells} x ${info.heightInCells}`);
+  }
+  return {
+    type: "plcMap",
+    revision: info.revision,
+    cellSizeInM: info.cellSizeInM,
+    originXInM: info.originXInM,
+    originYInM: info.originYInM,
+    widthInCells: info.widthInCells,
+    heightInCells: info.heightInCells,
+    logOddsPerUnit: info.logOddsPerUnit,
+    cellsBase64: Buffer.from(cells.buffer, cells.byteOffset, cells.length).toString("base64"),
+  };
 }
 
 type PlcStatus = Omit<HmiStatusJson, "missionState"> & { missionState: number };

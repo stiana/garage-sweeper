@@ -1,10 +1,13 @@
 import { type HitMap, type PlacedShape, type Pose2D, type RobotView, Vec2, type World, rectCorners } from "@garage/sim-core";
+import type { PlcMapMessage } from "@garage/gui-protocol";
 import type { MapAnnotations } from "../source/MapAnnotations";
+import { PlcMapImage, type PlcMapColors, cssColorToRgb } from "./PlcMapImage";
 import type { Camera } from "./Camera";
 import { type CanvasTheme, readCanvasTheme } from "./theme";
 
 export interface Layers {
   showHitMap: boolean;
+  showPlcMap: boolean;
   showRays: boolean;
   showEstimates: boolean;
   /** Draw LIDAR points at the true pose (follows the robot) or at the estimate (shows drift). */
@@ -20,6 +23,8 @@ export interface Overlay {
 /** Draws the garage, the robot and everything it believes onto a canvas. */
 export class Renderer {
   private theme: CanvasTheme = readCanvasTheme();
+  private plcMapColors: PlcMapColors = this.readPlcMapColors();
+  private readonly plcMapImage = new PlcMapImage();
   private context: CanvasRenderingContext2D;
   private width = 0;
   private height = 0;
@@ -36,6 +41,7 @@ export class Renderer {
 
   refreshTheme(): void {
     this.theme = readCanvasTheme();
+    this.plcMapColors = this.readPlcMapColors();
   }
 
   resize(): void {
@@ -48,13 +54,22 @@ export class Renderer {
     this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
   }
 
-  draw(world: World, view: RobotView, hitMap: HitMap, annotations: MapAnnotations, layers: Layers, overlay: Overlay): void {
+  draw(
+    world: World,
+    view: RobotView,
+    hitMap: HitMap,
+    plcMap: PlcMapMessage | null,
+    annotations: MapAnnotations,
+    layers: Layers,
+    overlay: Overlay,
+  ): void {
     const c = this.context;
     const t = this.theme;
     c.fillStyle = t.floor;
     c.fillRect(0, 0, this.width, this.height);
     this.drawGrid();
     for (const zone of world.floorZones) this.drawShape(zone, t.oil, null, overlay.selectedId === zone.id);
+    if (layers.showPlcMap && plcMap) this.drawPlcMap(plcMap);
     if (layers.showHitMap) this.drawHitMap(hitMap);
     this.drawWalls(world);
     for (const object of world.objects) this.drawShape(object, t.objectFill, t.object, overlay.selectedId === object.id);
@@ -153,6 +168,20 @@ export class Renderer {
       c.textBaseline = "middle";
       c.fillText(shape.label, center.x, center.y);
     }
+  }
+
+  private readPlcMapColors(): PlcMapColors {
+    return { occupied: cssColorToRgb(this.theme.hit), free: cssColorToRgb(this.theme.plc) };
+  }
+
+  private drawPlcMap(map: PlcMapMessage): void {
+    const c = this.context;
+    const image = this.plcMapImage.image(map, this.plcMapColors);
+    const size = map.cellSizeInM * this.camera.pixelsPerMeter;
+    const topLeft = this.screen(new Vec2(map.originXInM, map.originYInM + map.heightInCells * map.cellSizeInM));
+    c.imageSmoothingEnabled = false;
+    c.drawImage(image, topLeft.x, topLeft.y, map.widthInCells * size, map.heightInCells * size);
+    c.imageSmoothingEnabled = true;
   }
 
   private drawHitMap(hitMap: HitMap): void {

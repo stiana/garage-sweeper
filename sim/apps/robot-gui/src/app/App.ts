@@ -24,7 +24,13 @@ export class App {
   private readonly renderer: Renderer;
   private readonly tools: PointerTools;
   private readonly plot: ErrorPlot;
-  private readonly layers: Layers = { showHitMap: false, showRays: false, showEstimates: true, scanAtTruePose: true };
+  private readonly layers: Layers = {
+    showHitMap: false,
+    showPlcMap: true,
+    showRays: false,
+    showEstimates: true,
+    scanAtTruePose: true,
+  };
   private lastFrameInMs = performance.now();
   private lastReadoutInMs = 0;
   private objectCounter = 0;
@@ -76,7 +82,7 @@ export class App {
     const deltaInS = (nowInMs - this.lastFrameInMs) / 1000;
     this.lastFrameInMs = nowInMs;
     this.backend.update(deltaInS);
-    this.renderer.draw(this.world, this.backend.view, this.backend.hitMap, this.annotations, this.layers, {
+    this.renderer.draw(this.world, this.backend.view, this.backend.hitMap, this.backend.plcMap, this.annotations, this.layers, {
       selectedId: this.tools.selection?.id ?? null,
       draft: this.tools.draft,
       bodyRadiusInM: robotGeometry.bodyRadiusInM,
@@ -181,6 +187,7 @@ export class App {
     bindToggle("show-rays", (on) => (this.layers.showRays = on));
     bindToggle("scan-at-estimate", (on) => (this.layers.scanAtTruePose = !on));
     bindToggle("show-hitmap", (on) => (this.layers.showHitMap = on));
+    bindToggle("show-plc-map", (on) => (this.layers.showPlcMap = on));
     bindToggle("show-estimates", (on) => (this.layers.showEstimates = on));
     byId("clear-hitmap").addEventListener("click", () => this.backend.hitMap.clear());
 
@@ -429,6 +436,7 @@ export class App {
     const status = plc?.isConnected ? plc.status : null;
     const mode = this.backend.mode;
     byId("legend-plc").hidden = mode !== "plc";
+    byId("show-plc-map").hidden = mode !== "plc";
     chip(
       "chip-plc",
       mode === "local" ? "Lokal simulering" : mode === "standalone" ? "Server uten PLC" : status ? "PLC tilkoblet" : "Venter på PLC",

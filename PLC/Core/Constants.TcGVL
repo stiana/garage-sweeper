@@ -4,6 +4,11 @@
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL CONSTANT
 	MAX_SCAN_POINTS : UINT := 1024;
+	// Kartet er 256 x 256 ruter. Med 5 cm ruter blir det 12,8 x 12,8 m.
+	MAP_WIDTH_IN_CELLS : UINT := 256;
+	MAP_HEIGHT_IN_CELLS : UINT := 256;
+	// Én enhet i en kartcelle er så mye log-odds.
+	MAP_LOG_ODDS_PER_UNIT : LREAL := 0.1;
 	SIMULATOR_PROTOCOL_VERSION : UDINT := 4;
 	SIMULATOR_TIMEOUT_IN_CYCLES : UDINT := 20;
 	LIDAR_TIMEOUT_IN_MS : TIME := T#400MS;

@@ -13,6 +13,7 @@ VAR
 	_hasMap : BOOL;
 	requestedPose : Pose2D;
 	hasPoseRequest : BOOL;
+	hasMapClearRequest : BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
@@ -29,8 +30,11 @@ END_IF
 CASE _state OF
 	MissionState.MANUAL:
 		_desiredTwist := RobotHmi.command.manualTwist;
-	MissionState.MAPPING, MissionState.SWEEPING, MissionState.RETURNING_TO_DOCK:
-		// Kommer i M5 og M6: kartlegging, feiing og retur til lader.
+	MissionState.MAPPING:
+		// Til roboten kan utforske selv (M5), kjører du den med tastaturet mens den kartlegger.
+		_desiredTwist := RobotHmi.command.manualTwist;
+	MissionState.SWEEPING, MissionState.RETURNING_TO_DOCK:
+		// Kommer i M6: feiing og retur til lader.
 		_desiredTwist := Stopped();
 ELSE
 	_desiredTwist := Stopped();
@@ -76,7 +80,10 @@ CASE code OF
 			_state := MissionState.MANUAL;
 		END_IF
 	HmiCommandCode.START_MAPPING:
+		// Et nytt kart hver gang. Fortsetter du etter en pause, bruker du RESUME.
 		_state := MissionState.MAPPING;
+		_hasMap := FALSE;
+		hasMapClearRequest := TRUE;
 	HmiCommandCode.START_SWEEPING:
 		IF _hasMap THEN
 			_state := MissionState.SWEEPING;
@@ -97,6 +104,9 @@ CASE code OF
 			Reject('Det er ikke noe pauset oppdrag.');
 		END_IF
 	HmiCommandCode.STOP:
+		IF _state = MissionState.MAPPING OR (_state = MissionState.PAUSED AND stateBeforePause = MissionState.MAPPING) THEN
+			_hasMap := TRUE;
+		END_IF
 		_state := MissionState.IDLE;
 	HmiCommandCode.GO_TO_DOCK:
 		_state := MissionState.RETURNING_TO_DOCK;
@@ -139,6 +149,14 @@ END_IF
 pose := requestedPose;
 hasPoseRequest := FALSE;
 TryTakePoseRequest := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryTakeMapClearRequest" Id="{1fb4962b-93da-42cd-95fe-e8c20436d1bb}">
+      <Declaration><![CDATA[// TRUE én gang når en ny kartlegging starter, så kartet kan tømmes.
+METHOD TryTakeMapClearRequest : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TryTakeMapClearRequest := hasMapClearRequest;
+hasMapClearRequest := FALSE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="State" Id="{dbdbf95e-8f4b-5a68-9ddb-a6be58b8826a}">

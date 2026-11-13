@@ -13,6 +13,21 @@ VAR_GLOBAL PERSISTENT
 	wheelJerkInMPerS3 : LREAL := 10.0;
 	useGyroForHeading : BOOL := FALSE;
 	gyroScale : LREAL := 1.0;
+
+	// Hvor lidaren sitter på roboten, sett fra midt mellom hjulene (x fram, y mot venstre),
+	// og hvor mye den er dreid. I simulatoren står den midt mellom hjulene og peker rett fram.
+	lidarMountXInM : LREAL := 0.0;
+	lidarMountYInM : LREAL := 0.0;
+	lidarMountThetaInRad : LREAL := 0.0;
+
+	// Kartet. Origo er hjørnet til celle [0, 0]; med -3.4 dekker kartet en garasje på 6 x 6 m med god margin.
+	mapCellSizeInM : LREAL := 0.05;
+	mapOriginXInM : LREAL := -3.4;
+	mapOriginYInM : LREAL := -3.4;
+	// Log-odds i tideler (Constants.MAP_LOG_ODDS_PER_UNIT): treff +0.9, fri -0.4, aldri mer enn ±3.5.
+	mapHitLogOdds : SINT := 9;
+	mapFreeLogOdds : SINT := -4;
+	mapMaxLogOdds : SINT := 35;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

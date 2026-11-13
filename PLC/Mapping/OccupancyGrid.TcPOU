@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <POU Name="OccupancyGrid" Id="{5143b817-82df-4f1f-9bbe-19974cdb34d1}" SpecialFunc="None">
+    <Declaration><![CDATA[// Kartet over garasjen: et rutenett der hver rute har log-odds for at noe står der.
+// 0 er ukjent, positivt er opptatt og negativt er fritt, i enheter på Constants.MAP_LOG_ODDS_PER_UNIT.
+// Celle [x, y] dekker verden fra origo + (x, y) * cellestørrelse og én rute bort.
+{attribute 'linkalways'}
+{attribute 'no_explicit_call' := 'Use the methods of this class'}
+{attribute 'enable_dynamic_creation'}
+FUNCTION_BLOCK OccupancyGrid
+VAR
+	cells : ARRAY[0..Constants.MAP_WIDTH_IN_CELLS - 1, 0..Constants.MAP_HEIGHT_IN_CELLS - 1] OF SINT;
+	_revision : UDINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Clear" Id="{05cff652-b5f9-4982-92d0-538573bb89f8}">
+      <Declaration><![CDATA[// Gjør hele kartet ukjent igjen.
+METHOD Clear]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[MEMSET(destAddr := ADR(cells), fillByte := 0, n := SIZEOF(cells));]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Integrate" Id="{32d51ca9-7ccc-444a-85b2-7ca828a3af06}">
+      <Declaration><![CDATA[// Legger ett helt lidar-scan inn i kartet.
+METHOD Integrate
+VAR_IN_OUT CONSTANT
+	scan : LaserScan;
+END_VAR
+VAR_INPUT
+	// Der roboten tror den var da scannet ble ferdig.
+	pose : Pose2D;
+END_VAR
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Din oppgave (M3c). For hver stråle i fra 0 til scan.count - 1:
+//  1. Hopp over stråler uten måling: rangesInM[i] er 0 når lidaren ikke fikk noe svar.
+//  2. Lidaren sitter ikke nødvendigvis midt på roboten. Finn posisjonen dens i verden ved å
+//     rotere (Parameters.lidarMountXInM, Parameters.lidarMountYInM) med pose.thetaInRad og
+//     legge til (pose.x, pose.y).
+//  3. Strålens vinkel i verden:
+//     pose.thetaInRad + Parameters.lidarMountThetaInRad + scan.angleMinInRad + i * scan.angleIncrementInRad
+//  4. Endepunktet er lidarposisjonen pluss avstanden langs den vinkelen (COS og SIN).
+//  5. Gjør lidarposisjonen og endepunktet om til ruter med TryWorldToCell,
+//     og kall TraceRay(fromCell, toCell, isHit := TRUE).
+// Tenk på:
+//  - Lidarens rute er den samme for alle strålene i et scan.
+//  - Hva gjør du når endepunktet havner utenfor kartet?
+//  - Med RPLIDAR S2E er det 1000 stråler på 10 ms. Se på Exceed-telleren i tasken når det kjører.
+;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TryWorldToCell" Id="{eb26850a-0fd8-4957-888a-3288844717cb}">
+      <Declaration><![CDATA[// Finner ruta et punkt i verden ligger i. FALSE når punktet er utenfor kartet.
+METHOD TryWorldToCell : BOOL
+VAR_INPUT
+	xInM : LREAL;
+	yInM : LREAL;
+	cell : REFERENCE TO GridCell;
+END_VAR
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Din oppgave (M3a):
+//  rute x = rundet ned ((xInM - Parameters.mapOriginXInM) / Parameters.mapCellSizeInM), og tilsvarende for y.
+//  Fyll inn cell og returner TRUE bare når ruta er inne i kartet (IsInside hjelper deg).
+// Pass på: LREAL_TO_DINT runder til nærmeste, og TRUNC kutter mot null. Hvilken rute havner -0.3 i da?
+;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="TraceRay" Id="{554ac485-0832-4f93-b1c9-b20cb0071895}">
+      <Declaration><![CDATA[// Går gjennom alle rutene fra fromCell til toCell og oppdaterer dem.
+METHOD TraceRay
+VAR_INPUT
+	fromCell : GridCell;
+	toCell : GridCell;
+	// TRUE når strålen traff noe i toCell. FALSE gjør hele strålen fri, også siste rute.
+	isHit : BOOL;
+END_VAR
+VAR
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Din oppgave (M3b): Bresenhams linjealgoritme.
+//  - Alle rutene fra og med fromCell til (men ikke med) toCell er frie:
+//    AddLogOdds(cell, Parameters.mapFreeLogOdds).
+//  - toCell får AddLogOdds(toCell, Parameters.mapHitLogOdds) når isHit, ellers som en fri rute.
+// Bresenham går ett steg om gangen i den retningen linja går mest, og holder rede på en
+// feil-sum for å vite når den også skal ta et steg på tvers. Bare heltall, ingen COS eller SIN.
+// Den må virke i alle åtte retninger: test med en stråle rett opp, rett ned, og bratt bakover.
+;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddLogOdds" Id="{4c5a4cc8-7f48-4585-9baf-94f66de3e6de}">
+      <Declaration><![CDATA[// Legger til log-odds i én rute og holder den innenfor ±Parameters.mapMaxLogOdds.
+// Ruter utenfor kartet blir ikke rørt.
+METHOD PRIVATE AddLogOdds
+VAR_INPUT
+	cell : GridCell;
+	deltaInUnits : SINT;
+END_VAR
+VAR
+	sum : INT;
+	limit : INT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT IsInside(cell) THEN
+	RETURN;
+END_IF
+// Regn i INT, så summen ikke går rundt når SINT er full (127 + 1 blir -128).
+limit := SINT_TO_INT(Parameters.mapMaxLogOdds);
+sum := SINT_TO_INT(cells[cell.x, cell.y]) + SINT_TO_INT(deltaInUnits);
+cells[cell.x, cell.y] := INT_TO_SINT(LIMIT(-limit, sum, limit));]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsInside" Id="{23d73541-7533-4ffc-96cd-7ed55558b44d}">
+      <Declaration><![CDATA[METHOD IsInside : BOOL
+VAR_INPUT
+	cell : GridCell;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IsInside := cell.x >= 0 AND cell.x < UINT_TO_DINT(Constants.MAP_WIDTH_IN_CELLS)
+	AND cell.y >= 0 AND cell.y < UINT_TO_DINT(Constants.MAP_HEIGHT_IN_CELLS);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="LogOddsAt" Id="{3be1e76e-3198-4db1-8996-63fe41215828}">
+      <Declaration><![CDATA[// Log-odds i en rute, i enheter på Constants.MAP_LOG_ODDS_PER_UNIT. Ruter utenfor kartet er ukjente (0).
+METHOD LogOddsAt : SINT
+VAR_INPUT
+	cell : GridCell;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF IsInside(cell) THEN
+	LogOddsAt := cells[cell.x, cell.y];
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Publish" Id="{2d61cce2-8457-4ec5-97c3-d2f953fb2671}">
+      <Declaration><![CDATA[// Kopierer kartet ut til GUI-en, med et nytt revisjonsnummer.
+METHOD Publish
+VAR_IN_OUT
+	info : MapInfo;
+	target : ARRAY[0..Constants.MAP_WIDTH_IN_CELLS - 1, 0..Constants.MAP_HEIGHT_IN_CELLS - 1] OF SINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_revision := _revision + 1;
+target := cells;
+info.revision := _revision;
+info.cellSizeInM := Parameters.mapCellSizeInM;
+info.originXInM := Parameters.mapOriginXInM;
+info.originYInM := Parameters.mapOriginYInM;
+info.widthInCells := Constants.MAP_WIDTH_IN_CELLS;
+info.heightInCells := Constants.MAP_HEIGHT_IN_CELLS;
+info.logOddsPerUnit := Constants.MAP_LOG_ODDS_PER_UNIT;]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

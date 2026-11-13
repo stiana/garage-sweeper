@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.12">
+  <DUT Name="MapInfo" Id="{f6945a17-6c09-4a02-b7ce-4896e5d66e40}">
+    <Declaration><![CDATA[// Det GUI-en trenger for å tegne RobotHmi.mapCells.
+TYPE MapInfo :
+STRUCT
+	// Øker hver gang kartet er endret, så serveren bare henter cellene på nytt når det trengs.
+	revision : UDINT;
+	cellSizeInM : LREAL;
+	// Hjørnet til celle [0, 0] i verden.
+	originXInM : LREAL;
+	originYInM : LREAL;
+	widthInCells : UINT;
+	heightInCells : UINT;
+	// Hvor mye log-odds én enhet i en celle er. 0.1 betyr at 35 i cella er log-odds 3.5.
+	logOddsPerUnit : LREAL;
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>
